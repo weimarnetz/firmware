@@ -7,6 +7,7 @@ before_script:
 build:
     stage: build
     script:
+     - rm -rf lede
      - chown -R nobody .
      - sudo -u nobody make -j$(grep ^processor /proc/cpuinfo | wc -l) 
     artifacts:
