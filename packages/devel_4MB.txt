@@ -28,6 +28,8 @@ libiwinfo-lua
 luci-theme-bootstrap
 uhttpd
 #uhttpd-mod-ubus
+luci-mod-admin-full
+luci-mod-freifunk
 luci-weimar-splash
 luci-app-olsr
 luci-app-olsr-services
