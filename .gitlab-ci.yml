@@ -10,7 +10,7 @@ build:
     script:
      - id 
      - chown -R nobody . 
-     - sudo -u nobody make -j $(nproc) V=s 
+     - sudo -u nobody make -j $(nproc) 
     artifacts:
      paths:
       - lede/firmwares
