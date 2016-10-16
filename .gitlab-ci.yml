@@ -12,10 +12,8 @@ build:
      - sudo -u nobody make -j$(grep ^processor /proc/cpuinfo | wc -l) 
     artifacts:
      paths:
-      - lede/firmwares
+      - firmwares
     cache: 
-      paths:
-        - lede/dl
       key: "$CI_BUILD_REF_NAME"
       untracked: true
 
