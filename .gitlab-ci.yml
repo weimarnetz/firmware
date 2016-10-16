@@ -14,6 +14,7 @@ build:
      paths:
       - firmwares
     cache:
-      paths: lede
+      paths:
+      - lede
       key: "$CI_BUILD_REF_NAME"
 
