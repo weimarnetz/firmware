@@ -42,3 +42,8 @@ olsrd-mod-watchdog
 # VPN
 vtun
 
+# Weimarnetz
+kalua
+luci-weimar-splash
+kmod-sched
+tc

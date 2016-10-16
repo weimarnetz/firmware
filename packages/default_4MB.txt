@@ -13,6 +13,9 @@
 # Defaults
 freifunk-common
 community-profiles
+kalua
+kmod-sched
+tc
 
 # Common
 dnsmasq
@@ -22,7 +25,8 @@ libiwinfo-lua
 # GUI
 luci-theme-bootstrap
 uhttpd
-uhttpd-mod-ubus
+#uhttpd-mod-ubus
+luci-weimar-splash
 luci-app-olsr
 luci-app-olsr-services
 luci-app-owm
