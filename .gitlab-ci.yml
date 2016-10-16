@@ -13,7 +13,7 @@ build:
     artifacts:
      paths:
       - firmwares
-    cache: 
+    cache:
+      paths: lede
       key: "$CI_BUILD_REF_NAME"
-      untracked: true
 
