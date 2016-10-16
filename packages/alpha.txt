@@ -45,7 +45,7 @@ olsrd-mod-watchdog
 vtun
 
 # Weimarnetz
-kalua
+kalua-trunk
 luci-weimar-splash
 kmod-sched
 tc
