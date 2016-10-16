@@ -11,6 +11,7 @@
 -usign
 
 # Defaults
+freifunk-common
 community-profiles
 
 # Common
@@ -22,7 +23,6 @@ libiwinfo-lua
 luci-theme-bootstrap
 uhttpd
 uhttpd-mod-ubus
-luci-mod-freifunk-ui
 luci-app-olsr
 luci-app-olsr-services
 luci-app-owm

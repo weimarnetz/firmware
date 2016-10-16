@@ -3,12 +3,20 @@ image: ubuntu:16.04
 before_script:
 - apt-get update -yqq
 - apt-get install git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev -yqq
+- id 
 
 build:
     stage: build
-    script: 
-     - make -j $(nproc) V=s 
+    script:
+     - id 
+     - chown -R nobody:nobody . 
+     - sudo -u nobody make -j $(nproc) V=s 
     artifacts:
      paths:
-      - lede/firmware
+      - lede/firmwares
+    cache: 
+      paths:
+        - lede/dl
+      key: "$CI_BUILD_REF_NAME"
+      untracked: true
 

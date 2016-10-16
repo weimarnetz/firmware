@@ -175,15 +175,16 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	    mv "$$FILE" "$$NEWNAME"; \
 	  done; \
 	done;
+	# fixme: deal with changed paths
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
-	rm -f $(FW_TARGET_DIR)/*imagebuilder*.tar.xz
-	cp -a $(LEDE_DIR)/bin/$(MAINTARGET)/*imagebuilder-*.tar.xz $(FW_TARGET_DIR)/
+	#rm -f $(FW_TARGET_DIR)/*imagebuilder*.tar.xz
+	#cp -a $(LEDE_DIR)/bin/targets/$(MAINTARGET)/generic/*imagebuilder-*.tar.xz $(FW_TARGET_DIR)/
 	# copy packages
-	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
-	rm -rf $$PACKAGES_DIR; \
-	cp -a $(LEDE_DIR)/bin/$(MAINTARGET)/packages $$PACKAGES_DIR
-	rm -rf $(IB_BUILD_DIR)
+	#PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
+	#rm -rf $$PACKAGES_DIR; \
+	#cp -a $(LEDE_DIR)/bin/targets/$(MAINTARGET)/generic/packages $$PACKAGES_DIR
+	#rm -rf $(IB_BUILD_DIR)
 	touch $@
 
 stamp-clean-%:
