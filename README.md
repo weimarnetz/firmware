@@ -1,3 +1,7 @@
+# Weimarnetz Firmware Build based on Berlin Firmware Builder 
+
+*Work in Progress* 
+
 # Freifunk Firmware Berlin "Kathleen"
 https://wiki.freifunk.net/Berlin:Firmware
 
