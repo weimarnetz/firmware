@@ -1,0 +1,38 @@
+-kmod-usb-core
+-kmod-usb2
+-kmod-ledtrig-usbdev
+-kmod-usb-ohci
+-kmod-ppp
+-kmod-usb-serial
+-ppp
+-ppp-mod-pppoe
+-wpad
+-opkg
+-usign
+
+# Defaults
+community-profiles
+
+# Common
+dnsmasq
+iwinfo
+libiwinfo-lua
+
+# GUI
+luci-theme-bootstrap
+uhttpd
+uhttpd-mod-ubus
+luci-mod-freifunk-ui
+luci-app-olsr
+luci-app-olsr-services
+luci-app-owm
+luci-app-owm-cmd
+
+# OLSR
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-nameservice
+
+# VPN
+vtun

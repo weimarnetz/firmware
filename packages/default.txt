@@ -1,0 +1,44 @@
+-ppp
+-ppp-mod-pppoe
+-wpad-mini
+
+# Defaults
+community-profiles
+
+# Common
+mtr
+ip
+iperf
+ethtool
+dnsmasq
+iwinfo
+libiwinfo-lua
+
+# GUI-basics
+uhttpd
+uhttpd-mod-ubus
+luci-mod-freifunk-ui
+luci-app-olsr
+luci-app-olsr-services
+luci-app-owm
+luci-app-owm-ant
+luci-app-owm-cmd
+luci-app-owm-gui
+luci-theme-bootstrap
+# GUI addon
+luci-i18n-base-de
+luci-i18n-base-en
+luci-i18n-olsr-de
+luci-i18n-olsr-en
+
+# OLSR
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-txtinfo
+olsrd-mod-nameservice
+olsrd-mod-watchdog
+
+# VPN
+vtun
+
