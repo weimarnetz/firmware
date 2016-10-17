@@ -1,8 +1,8 @@
 -ppp
 -ppp-mod-pppoe
--wpad-mini
 -wpad 
 -firewall
+wpad-mini 
 
 # Defaults
 freifunk-common

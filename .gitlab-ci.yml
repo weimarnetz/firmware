@@ -8,7 +8,8 @@ build:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make -j$(grep ^processor /proc/cpuinfo | wc -l) 
+     - sudo -u nobody make -j$(grep ^processor /proc/cpuinfo | wc -l)
+     - sudo -u nobody lede/make clean
     artifacts:
      paths:
       - firmwares

@@ -3,6 +3,7 @@
 -wpad-mini
 -wpad 
 -firewall
+wpad-mini
 
 # Defaults
 freifunk-common
