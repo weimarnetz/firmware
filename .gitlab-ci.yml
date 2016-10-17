@@ -9,7 +9,7 @@ build:
     script:
      - chown -R nobody .
      - sudo -u nobody make -j$(grep ^processor /proc/cpuinfo | wc -l)
-     - sudo -u nobody lede/make clean
+     - cd lede; sudo -u nobody make clean
     artifacts:
      paths:
       - firmwares
