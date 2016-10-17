@@ -14,8 +14,6 @@
 
 # Defaults
 hostapd-mini
-freifunk-common
-community-profiles
 kalua
 kmod-sched
 tc

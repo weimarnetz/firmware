@@ -6,9 +6,6 @@
 
 # Defaults
 hostapd-mini
-freifunk-common
-community-profiles
--freifunk-firewall 
 
 # Common
 mtr
