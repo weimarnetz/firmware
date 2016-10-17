@@ -3,17 +3,19 @@
 -wpad-mini
 -wpad 
 -firewall
-wpad-mini
 
 # Defaults
+hostapd-mini
 freifunk-common
 community-profiles
+-freifunk-firewall 
 
 # Common
 mtr
 ip
 iperf
 ethtool
+horst
 dnsmasq
 iwinfo
 libiwinfo-lua

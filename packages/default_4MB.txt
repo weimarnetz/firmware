@@ -7,12 +7,13 @@
 -ppp
 -ppp-mod-pppoe
 -wpad
+-wpad-mini
 -opkg
 -usign
 -firewall
-wpad-mini
 
 # Defaults
+hostapd-mini
 freifunk-common
 community-profiles
 kalua
@@ -35,6 +36,7 @@ luci-app-olsr
 luci-app-olsr-services
 luci-app-owm
 luci-app-owm-cmd
+-freifunk-firewall
 
 # OLSR
 olsrd
