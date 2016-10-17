@@ -41,6 +41,8 @@ olsrd
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
 olsrd-mod-nameservice
+olsrd-mod-txtinfo
+olsrd-mod-dyn-gw
 
 # VPN
 vtun

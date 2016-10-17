@@ -42,6 +42,7 @@ olsrd-mod-jsoninfo
 olsrd-mod-txtinfo
 olsrd-mod-nameservice
 olsrd-mod-watchdog
+olsrd-mod-dyn-gw
 
 # VPN
 vtun
