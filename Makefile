@@ -13,14 +13,14 @@ FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
 LEDE_DIR=$(FW_DIR)/lede
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
-FW_VERSION=$(shell sed -n 's/^CONFIG_VERSION_NUMBER=//p' $(FW_DIR)/configs/common.config)
+FW_VERSION=$(shell sed -n 's/^CONFIG_VERSION_NUMBER="\(.*\)"/\1/p' $(FW_DIR)/configs/common.config)
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
 FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_VERSION)+$(FW_REVISION)/$(TARGET)
 UMASK=umask 022
 
-#$(info FW_VERSION="$(FW_VERSION)")
-#$(info FW_REVISION="$(FW_REVISION)")
-#$(info FW_TARGET_DIR="$(FW_TARGET_DIR)")
+$(info FW_VERSION="$(FW_VERSION)")
+$(info FW_REVISION="$(FW_REVISION)")
+$(info FW_TARGET_DIR="$(FW_TARGET_DIR)")
 # if any of the following files have been changed: clean up lede dir
 DEPS=$(TARGET_CONFIG) feeds.conf patches $(wildcard patches/*)
 
