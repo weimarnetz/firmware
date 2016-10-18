@@ -186,13 +186,13 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
 	rm -f $(FW_TARGET_DIR)/*imagebuilder*.tar.xz
-	cp -a $(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
+	cp $$(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
 	rm -rf $$PACKAGES_DIR; \
 	cd $(LEDE_DIR)/bin; \
-		rsync -avR $(find target -name packages -type d) $$PACKAGES_DIR; \
-		rsync -av packages $$PACKAGES_DIR; \ 
+		rsync -avR $$(find target -name packages -type d) $$PACKAGES_DIR; \
+		rsync -av packages $$PACKAGES_DIR;  
 	touch $@
 
 stamp-clean-%:
