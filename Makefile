@@ -189,7 +189,6 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	cp $$(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
-	rm -rf $$PACKAGES_DIR; \
 	cd $(LEDE_DIR)/bin; \
 		rsync -avR $$(find target -name packages -type d) $$PACKAGES_DIR; \
 		rsync -av packages $$PACKAGES_DIR;  
