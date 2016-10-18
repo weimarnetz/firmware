@@ -6,6 +6,7 @@
 
 # Defaults
 hostapd-mini
+kmod-ipt-nat
 
 # Common
 mtr

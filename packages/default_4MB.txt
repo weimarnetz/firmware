@@ -17,6 +17,7 @@ hostapd-mini
 kalua
 kmod-sched
 tc
+kmod-ipt-nat
 
 # Common
 dnsmasq
