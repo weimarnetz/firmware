@@ -145,7 +145,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	    PACKAGES_FILE_ABS="$$PACKAGES_PATH/$$PACKAGES_FILE.txt"; \
 	    PACKAGES_LIST=$$(grep -v '^\#' $$PACKAGES_FILE_ABS | tr -t '\n' ' '); \
 	    $(UMASK);\
-	    echo -e "\n *** Building Kathleen image file for profile \"$${PROFILE}\" with packages list \"$${PACKAGES_FILE}\".\n"; \
+	    echo -e "\n *** Building image file for profile \"$${PROFILE}\" with packages list \"$${PACKAGES_FILE}\".\n"; \
 	    $(MAKE) -C $(IB_BUILD_DIR)/imgbldr image PROFILE="$$PROFILE" PACKAGES="$$PACKAGES_LIST" BIN_DIR="$(IB_BUILD_DIR)/imgbldr/bin/$$PACKAGES_FILE" $$CUSTOM_POSTINST_PARAM || exit 1; \
 	  done; \
 	done
@@ -153,8 +153,6 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	# Create version info file
 	GIT_BRANCH_ESC=$(shell $(GIT_BRANCH) | tr '/' '_'); \
 	VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt; \
-	echo "https://github.com/freifunk-berlin/firmware" > $$VERSION_FILE; \
-	echo "https://wiki.freifunk.net/Berlin:Firmware" >> $$VERSION_FILE; \
 	echo "Firmware: git branch \"$$GIT_BRANCH_ESC\", revision $(FW_REVISION)" >> $$VERSION_FILE; \
 	# add lede revision with data from config.mk \
 	LEDE_REVISION=`cd $(LEDE_DIR); $(REVISION)`; \
@@ -182,10 +180,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	    mv "$$FILE" "$$NEWNAME"; \
 	  done; \
 	done;
-	# fixme: deal with changed paths
 	# copy imagebuilder, sdk and toolchain (if existing)
-	# remove old versions
-	rm -f $(FW_TARGET_DIR)/*imagebuilder*.tar.xz
 	cp $$(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
