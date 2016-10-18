@@ -10,19 +10,23 @@ REVISION=git describe --always
 
 # set dir and file names
 FW_DIR=$(shell pwd)
+FW_REVISION=$(shell $(REVISION))
 LEDE_DIR=$(FW_DIR)/lede
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
+FW_VERSION=$(shell sed -n 's/^CONFIG_VERSION_NUMBER=//p' $(FW_DIR)/configs/common.config)
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(TARGET)
+FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_VERSION)+$(FW_REVISION)/$(TARGET)
 UMASK=umask 022
 
+#$(info FW_VERSION="$(FW_VERSION)")
+#$(info FW_REVISION="$(FW_REVISION)")
+#$(info FW_TARGET_DIR="$(FW_TARGET_DIR)")
 # if any of the following files have been changed: clean up lede dir
 DEPS=$(TARGET_CONFIG) feeds.conf patches $(wildcard patches/*)
 
 # profiles to be built (router models)
 PROFILES=$(shell cat $(FW_DIR)/profiles/$(TARGET).profiles)
 
-FW_REVISION=$(shell $(REVISION))
 
 default: firmwares
 
@@ -45,7 +49,10 @@ lede-clean-bin:
 # update lede and checkout specified commit
 lede-update: stamp-clean-lede-updated .stamp-lede-updated
 .stamp-lede-updated: .stamp-lede-cleaned
-	cd $(LEDE_DIR); git checkout --detach $(LEDE_COMMIT)
+	cd $(LEDE_DIR); \
+		git checkout master && \
+		git pull && \
+		git checkout --detach $(LEDE_COMMIT)
 	touch $@
 
 # patches require updated lede working copy
@@ -178,13 +185,14 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	# fixme: deal with changed paths
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
-	#rm -f $(FW_TARGET_DIR)/*imagebuilder*.tar.xz
-	#cp -a $(LEDE_DIR)/bin/targets/$(MAINTARGET)/generic/*imagebuilder-*.tar.xz $(FW_TARGET_DIR)/
+	rm -f $(FW_TARGET_DIR)/*imagebuilder*.tar.xz
+	cp -a $(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
-	#PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
-	#rm -rf $$PACKAGES_DIR; \
-	#cp -a $(LEDE_DIR)/bin/targets/$(MAINTARGET)/generic/packages $$PACKAGES_DIR
-	#rm -rf $(IB_BUILD_DIR)
+	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
+	rm -rf $$PACKAGES_DIR; \
+	cd $(LEDE_DIR)/bin; \
+		rsync -avR $(find target -name packages -type d) $$PACKAGES_DIR; \
+		rsync -av packages $$PACKAGES_DIR; \ 
 	touch $@
 
 stamp-clean-%:
