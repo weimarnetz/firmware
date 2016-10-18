@@ -21,8 +21,9 @@ build:
 deploy:
     stage: deploy
     script:
-        - eval $(ssh-agent -s) 
-        - ssh-add <(echo "${SSH_PRIVATE_KEY}") 
-        - echo "${SSH_HOST_KEY}" > hostkey 
-        - rsync -hrvz -e 'ssh -o "UserKnownHostsFile hostkey" -i id_ed25519' firmwares firmware@weimarnetz.segfault.gq:/home/firmware/public_html/
+     - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+     - eval $(ssh-agent -s) 
+     - ssh-add <(echo "${SSH_PRIVATE_KEY}") 
+     - echo "${SSH_HOST_KEY}" > hostkey 
+     - rsync -hrvz -e 'ssh -o "UserKnownHostsFile hostkey"' firmwares firmware@weimarnetz.segfault.gq:/home/firmware/public_html/
 
