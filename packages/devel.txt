@@ -8,6 +8,7 @@
 hostapd-mini 
 freifunk-common
 community-profiles
+kmod-ipt-nat
 
 # Common
 horst
@@ -29,7 +30,7 @@ luci-app-olsr-services
 luci-app-owm
 luci-app-owm-ant
 luci-app-owm-cmd
-luci-app-owm-gui
+#luci-app-owm-gui
 luci-theme-bootstrap
 # GUI addon
 luci-i18n-base-de
@@ -45,6 +46,7 @@ olsrd-mod-jsoninfo
 olsrd-mod-txtinfo
 olsrd-mod-nameservice
 olsrd-mod-watchdog
+olsrd-mod-dyn-gw
 
 # VPN
 vtun

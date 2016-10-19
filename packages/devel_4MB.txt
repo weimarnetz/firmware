@@ -1,48 +1,58 @@
--kmod-usb-core
--kmod-usb2
--kmod-ledtrig-usbdev
--kmod-usb-ohci
--kmod-ppp
--kmod-usb-serial
 -ppp
 -ppp-mod-pppoe
--wpad
--opkg
--usign
+-wpad 
 -firewall
 -wpad-mini 
 
 # Defaults
-hostapd-mini
+hostapd-mini 
 freifunk-common
 community-profiles
-kalua-trunk
-kmod-sched
-tc
+kmod-ipt-nat
 
 # Common
+#horst
+#mtr
+ip
+#iperf
+#ethtool
 dnsmasq
 iwinfo
 libiwinfo-lua
 
-# GUI
-luci-theme-bootstrap
+# GUI-basics
 uhttpd
 #uhttpd-mod-ubus
 luci-mod-admin-full
 luci-mod-freifunk
-luci-weimar-splash
 luci-app-olsr
 luci-app-olsr-services
 luci-app-owm
+luci-app-owm-ant
 luci-app-owm-cmd
+#luci-app-owm-gui
+luci-theme-bootstrap
+# GUI addon
+#luci-i18n-base-de
+#luci-i18n-base-en
+#luci-i18n-olsr-de
+#luci-i18n-olsr-en
 -freifunk-firewall
 
 # OLSR
 olsrd
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
+olsrd-mod-txtinfo
 olsrd-mod-nameservice
+olsrd-mod-watchdog
+olsrd-mod-dyn-gw
 
 # VPN
 vtun
+
+# Weimarnetz
+kalua-trunk
+luci-weimar-splash
+kmod-sched
+tc
