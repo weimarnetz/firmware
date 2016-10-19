@@ -13,10 +13,7 @@ build:
     artifacts:
      paths:
       - firmwares
-    cache:
-      paths:
-      - dl 
-      key: "$CI_BUILD_REF_NAME"
+     expire_in: 1 day
 
 deploy:
     stage: deploy
