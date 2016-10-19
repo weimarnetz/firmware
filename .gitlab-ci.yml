@@ -14,6 +14,9 @@ build:
      paths:
       - firmwares
      expire_in: 1 day
+    cache:
+     paths:
+      - dl
 
 deploy:
     stage: deploy

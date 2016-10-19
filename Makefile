@@ -48,7 +48,7 @@ lede-clean-bin:
 
 # update lede and checkout specified commit
 lede-update: stamp-clean-lede-updated .stamp-lede-updated
-.stamp-lede-updated: .stamp-lede-cleaned
+.stamp-lede-updated: .stamp-lede-cleaned | $(LEDE_DIR)/dl
 	cd $(LEDE_DIR); \
 		git checkout master && \
 		git pull && \
@@ -58,6 +58,11 @@ lede-update: stamp-clean-lede-updated .stamp-lede-updated
 # patches require updated lede working copy
 $(LEDE_DIR)/patches: | .stamp-lede-updated
 	ln -s $(FW_DIR)/patches $@
+
+# symlink download folder 
+$(LEDE_DIR)/dl: 
+	mkdir $(FW_DIR)/dl || true && \
+	ln -s $(FW_DIR)/dl $@
 
 # feeds
 $(LEDE_DIR)/feeds.conf: .stamp-lede-updated feeds.conf
@@ -186,7 +191,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
 	cd $(LEDE_DIR)/bin; \
 		rsync -avR $$(find target -name packages -type d) $$PACKAGES_DIR; \
-		rsync -av packages $$PACKAGES_DIR;  
+		rsync -avr packages $$PACKAGES_DIR;  
 	touch $@
 
 stamp-clean-%:
@@ -203,6 +208,6 @@ unpatch: $(LEDE_DIR)/patches
 
 clean: stamp-clean .stamp-lede-cleaned
 
-.PHONY: lede-clean lede-clean-bin lede-update patch feeds-update prepare compile firmwares stamp-clean clean
+.PHONY: lede-clean lede-clean-bin lede-update lede-symlink-dl patch feeds-update prepare compile firmwares stamp-clean clean
 .NOTPARALLEL:
 .FORCE:
