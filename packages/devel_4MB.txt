@@ -40,13 +40,13 @@ luci-theme-bootstrap
 -freifunk-firewall
 
 # OLSR
-olsrd
-olsrd-mod-arprefresh
-olsrd-mod-jsoninfo
-olsrd-mod-txtinfo
-olsrd-mod-nameservice
-olsrd-mod-watchdog
-olsrd-mod-dyn-gw
+olsrd-stable-git
+olsrd-stable-git-mod-arprefresh
+olsrd-stable-git-mod-jsoninfo
+olsrd-stable-git-mod-txtinfo
+olsrd-stable-git-mod-nameservice
+olsrd-stable-git-mod-watchdog
+olsrd-stable-git-mod-dyn-gw
 
 # VPN
 vtun
