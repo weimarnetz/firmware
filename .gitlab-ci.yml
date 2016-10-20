@@ -9,7 +9,7 @@ cache:
     paths:
      - dl
 
-build:ar71xx
+build:ar71xx:
     stage: build
     script:
      - chown -R nobody .
@@ -20,7 +20,7 @@ build:ar71xx
       - firmwares
      expire_in: 1 day
 
-build:x86
+build:x86:
     stage: build
     script:
      - chown -R nobody .
