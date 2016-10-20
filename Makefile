@@ -175,15 +175,15 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	  TARGET_DIR=$(FW_TARGET_DIR)/$$(basename $$DIR_ABS); \
 	  rm -rf $$TARGET_DIR; \
 	  mv $$DIR_ABS $$TARGET_DIR; \
-	  cp $(FW_TARGET_DIR)/$$VERSION_FILE $$TARGET_DIR/; 
-	done;
+	  cp $(FW_TARGET_DIR)/$$VERSION_FILE $$TARGET_DIR/; \
+	done
 	# copy imagebuilder, sdk and toolchain (if existing)
 	cp $$(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
 	cd $(LEDE_DIR)/bin; \
 		rsync -avR $$(find targets -name packages -type d) $$PACKAGES_DIR; \
-		rsync -avr packages $$PACKAGES_DIR;  
+		rsync -avr packages $$PACKAGES_DIR  
 	touch $@
 
 stamp-clean-%:
