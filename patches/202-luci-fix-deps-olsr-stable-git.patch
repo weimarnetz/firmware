@@ -31,3 +31,14 @@
  
  include ../../luci.mk
  
+--- a/feeds/packages_weimar/utils/luci-app-owm/Makefile
++++ b/feeds/packages_weimar/utils/luci-app-owm/Makefile
+@@ -25,7 +25,7 @@ endef
+ 
+ define Package/luci-app-owm
+   $(call Package/luci-app-owm/default)
+-  DEPENDS:=+luci-lib-json +olsrd-mod-jsoninfo +luci-lib-luaneightbl
++  DEPENDS:=+luci-lib-json +olsrd-stable-git-mod-jsoninfo +luci-lib-luaneightbl
+   TITLE:=Luci JSON Export for Open Wireless Map
+ endef
+ 
