@@ -4,20 +4,34 @@ before_script:
 - apt-get update -yqq
 - apt-get install sudo git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync -yqq
 
-build:
+cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+     - dl
+
+build:ar71xx
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make -j$(grep ^processor /proc/cpuinfo | wc -l)
+     - sudo -u nobody make TARGET=ar71xx -j$(grep ^processor /proc/cpuinfo | wc -l)
      - cd lede; sudo -u nobody make clean
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
-    cache:
-     paths:
-      - dl
 
+build:x86
+    stage: build
+    script:
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=x86 -j$(grep ^processor /proc/cpuinfo | wc -l)
+     - cd lede; sudo -u nobody make clean
+    artifacts:
+     paths:
+      - firmwares
+     expire_in: 1 day
+
+             
 deploy:
     stage: deploy
     script:
