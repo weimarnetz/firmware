@@ -2,4 +2,3 @@
 801-fragment-cache-size.patch
 201-luci-remove-freifunk-firewall.patch
 202-luci-fix-deps-olsr-stable-git.patch
-701-use-ath10k-ct.patch
