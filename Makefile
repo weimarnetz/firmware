@@ -25,7 +25,7 @@ $(info FW_TARGET_DIR="$(FW_TARGET_DIR)")
 DEPS=$(TARGET_CONFIG) feeds.conf patches $(wildcard patches/*)
 
 # profiles to be built (router models)
-PROFILES=$(shell cat $(FW_DIR)/profiles/$(TARGET).profiles)
+PROFILES?=$(shell cat $(FW_DIR)/profiles/$(TARGET).profiles)
 
 
 default: firmwares
@@ -161,8 +161,8 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	echo "Firmware: git branch \"$$GIT_BRANCH_ESC\", revision $(FW_REVISION)" >> $$VERSION_FILE 
 	# add lede revision with data from config.mk 
 	LEDE_REVISION=`cd $(LEDE_DIR); $(REVISION)`; \
-	echo "LEDE: repository from $(LEDE_SRC), git branch \"$(LEDE_COMMIT)\", revision $$LEDE_REVISION" >> $$VERSION_FILE 
-	# add feed revisions 
+	echo "LEDE: repository from $(LEDE_SRC), git branch \"$(LEDE_COMMIT)\", revision $$LEDE_REVISION" >> $$VERSION_FILE; \ 
+	# add feed revisions \
 	for FEED in `cd $(LEDE_DIR); ./scripts/feeds list -n`; do \
 	  FEED_DIR=$(addprefix $(LEDE_DIR)/feeds/,$$FEED); \
 	  FEED_GIT_REPO=`cd $$FEED_DIR; $(GIT_REPO)`; \
@@ -176,7 +176,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	  rm -rf $$TARGET_DIR; \
 	  mv $$DIR_ABS $$TARGET_DIR; \
 	  cp $(FW_TARGET_DIR)/$$VERSION_FILE $$TARGET_DIR/; \
-	done
+	done;
 	# copy imagebuilder, sdk and toolchain (if existing)
 	cp $$(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
