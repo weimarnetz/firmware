@@ -57,7 +57,7 @@ $(LEDE_DIR)/patches: | .stamp-lede-updated
 	ln -s $(FW_DIR)/patches $@
 
 # symlink download folder 
-$(LEDE_DIR)/dl: 
+$(LEDE_DIR)/dl:
 	mkdir $(FW_DIR)/dl || true && \
 	ln -s $(FW_DIR)/dl $@
 
@@ -104,6 +104,8 @@ $(LEDE_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
 # prepare lede working copy
 prepare: stamp-clean-prepared .stamp-prepared
 .stamp-prepared: .stamp-patched $(LEDE_DIR)/.config
+	# delete tmpinfo to make patches work
+	rm -rf $(LEDE_DIR)/tmp
 	sed -i 's,^# REVISION:=.*,REVISION:=$(FW_REVISION),g' $(LEDE_DIR)/include/version.mk
 	touch $@
 
