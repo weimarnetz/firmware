@@ -13,7 +13,7 @@ kmod-ipt-nat
 # Common
 horst
 mtr
-ip
+ip-full
 iperf
 ethtool
 dnsmasq

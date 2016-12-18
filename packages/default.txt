@@ -10,7 +10,6 @@ kmod-ipt-nat
 
 # Common
 mtr
-ip
 iperf
 ethtool
 horst
