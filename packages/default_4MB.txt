@@ -10,12 +10,10 @@
 -wpad-mini
 -opkg
 -usign
--firewall
+firewall
 
 # Defaults
 hostapd-mini
-kalua
-kmod-sched
 tc
 kmod-ipt-nat
 
@@ -29,10 +27,7 @@ luci-mod-admin-full
 luci-mod-freifunk
 luci-theme-bootstrap
 uhttpd
-#uhttpd-mod-ubus
-luci-weimar-splash
-luci-app-olsr
-luci-app-olsr-services
+uhttpd-mod-ubus
 luci-app-owm
 luci-app-owm-cmd
 -freifunk-firewall

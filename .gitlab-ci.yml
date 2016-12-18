@@ -20,6 +20,29 @@ build:ar71xx:
       - firmwares
      expire_in: 1 day
 
+build:ramips_mt7620:
+    stage: build
+    script:
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=ramips_mt7620 -j$(grep ^processor /proc/cpuinfo | wc -l)
+     - cd lede; sudo -u nobody make clean
+    artifacts:
+     paths:
+      - firmwares
+     expire_in: 1 day
+
+
+build:ramips_mt7628:
+    stage: build
+    script:
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=ramips_mt7628 -j$(grep ^processor /proc/cpuinfo | wc -l)
+     - cd lede; sudo -u nobody make clean
+    artifacts:
+     paths:
+      - firmwares
+     expire_in: 1 day
+
 build:x86:
     stage: build
     script:

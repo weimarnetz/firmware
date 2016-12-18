@@ -4,6 +4,10 @@ include config.mk
 MAINTARGET=$(word 1, $(subst _, ,$(TARGET)))
 SUBTARGET=$(word 2, $(subst _, ,$(TARGET)))
 
+ifeq ($(strip $(SUBTARGET)),)
+	SUBTARGET:=generic
+endif
+
 GIT_REPO=git config --get remote.origin.url
 GIT_BRANCH=git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,'
 REVISION=git describe --always
@@ -125,7 +129,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	rm -rf $(IB_BUILD_DIR)
 	mkdir -p $(IB_BUILD_DIR)
 	$(eval TOOLCHAIN_PATH := $(shell printf "%s:" $(LEDE_DIR)/staging_dir/toolchain-*/bin))
-	$(eval IB_FILE := $(shell ls $(LEDE_DIR)/bin/targets/$(MAINTARGET)/generic/*-imagebuilder-*.tar.xz))
+	$(eval IB_FILE := $(shell ls $(LEDE_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz))
 	cd $(IB_BUILD_DIR); tar xf $(IB_FILE)
 	# shorten dir name to prevent too long paths
 	mv $(IB_BUILD_DIR)/$(shell basename $(IB_FILE) .tar.xz) $(IB_BUILD_DIR)/imgbldr
