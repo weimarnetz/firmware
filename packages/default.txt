@@ -17,6 +17,7 @@ horst
 dnsmasq
 iwinfo
 libiwinfo-lua
+ip-full
 
 # GUI-basics
 uhttpd
