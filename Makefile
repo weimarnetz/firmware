@@ -10,14 +10,14 @@ endif
 
 GIT_REPO=git config --get remote.origin.url
 GIT_BRANCH=git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,'
-REVISION=git describe --always
+#REVISION=git describe --always
 
 # set dir and file names
 FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
 LEDE_DIR=$(FW_DIR)/lede
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
-FW_VERSION=$(shell sed -n 's/^CONFIG_VERSION_NUMBER="\(.*\)"/\1/p' $(FW_DIR)/configs/common.config)
+#FW_VERSION=$(shell sed -n 's/^CONFIG_VERSION_NUMBER="\(.*\)"/\1/p' $(FW_DIR)/configs/common.config)
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
 FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_VERSION)+$(FW_REVISION)/$(TARGET)
 UMASK=umask 022
@@ -92,10 +92,12 @@ patch: stamp-clean-patched .stamp-patched
 .stamp-build_rev: .FORCE
 ifneq (,$(wildcard .stamp-build_rev))
 ifneq ($(shell cat .stamp-build_rev),$(FW_REVISION))
-	echo $(FW_REVISION) | diff >/dev/null -q $@ - || echo -n $(FW_REVISION) >$@
+	#echo $(FW_REVISION) | diff >/dev/null -q $@ - || echo -n $(FW_REVISION) >$@
+	$(LEDE_DIR)/scripts/getver.sh >$@
 endif
 else
-	echo -n $(FW_REVISION) >$@
+	#echo -n $(FW_REVISION) >$@
+	$(LEDE_DIR)/scripts/getver.sh >$@
 endif
 
 # lede config
@@ -159,19 +161,19 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	done
 	mkdir -p $(FW_TARGET_DIR)
 	# Create version info file
-	#GIT_BRANCH_ESC=$(shell $(GIT_BRANCH) | tr '/' '_'); \
-	#VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt; \
-	#echo "Firmware: git branch \"$$GIT_BRANCH_ESC\", revision $(FW_REVISION)" >> $$VERSION_FILE 
+	#GIT_BRANCH_ESC=$(shell $(GIT_BRANCH) | tr '/' '_'); 
+	VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt; \
+	echo "Firmware: git branch \"$$GIT_BRANCH_ESC\", revision $(FW_REVISION)" >> $$VERSION_FILE 
 	# add lede revision with data from config.mk 
-	#LEDE_REVISION=`cd $(LEDE_DIR); $(REVISION)`; \
-	#echo "LEDE: repository from $(LEDE_SRC), git branch \"$(LEDE_COMMIT)\", revision $$LEDE_REVISION" >> $$VERSION_FILE; \ 
-	# add feed revisions \
-	#for FEED in `cd $(LEDE_DIR); ./scripts/feeds list -n`; do \
-	#  FEED_DIR=$(addprefix $(LEDE_DIR)/feeds/,$$FEED); \
-	#  FEED_GIT_REPO=`cd $$FEED_DIR; $(GIT_REPO)`; \
-	#  FEED_GIT_BRANCH_ESC=`cd $$FEED_DIR; $(GIT_BRANCH) | tr '/' '_'`; \
-	#  FEED_REVISION=`cd $$FEED_DIR; $(REVISION)`; \
-	#  echo "Feed $$FEED: repository from $$FEED_GIT_REPO, git branch \"$$FEED_GIT_BRANCH_ESC\", revision $$FEED_REVISION" >> $$VERSION_FILE; \
+	LEDE_REVISION=`cd $(LEDE_DIR); $(REVISION)`; \
+	echo "LEDE: repository from $(LEDE_SRC), git branch \"$(LEDE_COMMIT)\", revision $$LEDE_REVISION" >> $$VERSION_FILE; \ 
+	# add feed revisions 
+	for FEED in `cd $(LEDE_DIR); ./scripts/feeds list -n`; do \
+	  FEED_DIR=$(addprefix $(LEDE_DIR)/feeds/,$$FEED); \
+	  FEED_GIT_REPO=`cd $$FEED_DIR; $(GIT_REPO)`; \
+	  FEED_GIT_BRANCH_ESC=`cd $$FEED_DIR; $(GIT_BRANCH) | tr '/' '_'`; \
+	  FEED_REVISION=`cd $$FEED_DIR; $(REVISION)`; \
+	  echo "Feed $$FEED: repository from $$FEED_GIT_REPO, git branch \"$$FEED_GIT_BRANCH_ESC\", revision $$FEED_REVISION" >> $$VERSION_FILE; \
 	# done
 	# copy different firmwares (like vpn, minimal) including imagebuilder
 	for DIR_ABS in $(IB_BUILD_DIR)/imgbldr/bin/*; do \

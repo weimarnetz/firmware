@@ -33,12 +33,12 @@ luci-app-owm-cmd
 -freifunk-firewall
 
 # OLSR
-olsrd-stable-git
-olsrd-stable-git-mod-arprefresh
-olsrd-stable-git-mod-jsoninfo
-olsrd-stable-git-mod-nameservice
-olsrd-stable-git-mod-txtinfo
-olsrd-stable-git-mod-dyn-gw
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-nameservice
+olsrd-mod-txtinfo
+olsrd-mod-dyn-gw
 
 # VPN
 vtun
