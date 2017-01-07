@@ -13,7 +13,7 @@ kmod-ipt-nat
 mtr
 iperf
 ethtool
-horst
+#horst
 dnsmasq
 iwinfo
 libiwinfo-lua
