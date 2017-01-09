@@ -10,16 +10,14 @@ endif
 
 GIT_REPO=git config --get remote.origin.url
 GIT_BRANCH=git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,'
-#REVISION=git describe --always
-
+REVISION=git describe --always
 # set dir and file names
 FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
 LEDE_DIR=$(FW_DIR)/lede
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
-#FW_VERSION=$(shell sed -n 's/^CONFIG_VERSION_NUMBER="\(.*\)"/\1/p' $(FW_DIR)/configs/common.config)
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_VERSION)+$(FW_REVISION)/$(TARGET)
+FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(TARGET)
 UMASK=umask 022
 
 # if any of the following files have been changed: clean up lede dir
@@ -90,20 +88,14 @@ patch: stamp-clean-patched .stamp-patched
 	touch $@
 
 .stamp-build_rev: .FORCE
-ifneq (,$(wildcard .stamp-build_rev))
-ifneq ($(shell cat .stamp-build_rev),$(FW_REVISION))
-	#echo $(FW_REVISION) | diff >/dev/null -q $@ - || echo -n $(FW_REVISION) >$@
-	$(LEDE_DIR)/scripts/getver.sh >$@
-endif
-else
-	#echo -n $(FW_REVISION) >$@
-	$(LEDE_DIR)/scripts/getver.sh >$@
-endif
+	$(eval FW_REVISION := $(FW_REVISION)+lede-$(shell cd $(LEDE_DIR); ./scripts/getver.sh))
+	touch $@
 
 # lede config
 $(LEDE_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
 	cat $(TARGET_CONFIG) >$(LEDE_DIR)/.config
-	sed -i "/^CONFIG_VERSION_NUMBER=/ s/\"$$/\+$(FW_REVISION)\"/" $(LEDE_DIR)/.config
+	sed -i '/^CONFIG_VERSION_NUMBER=/d' $(LEDE_DIR)/.config 
+	echo CONFIG_VERSION_NUMBER=$$(FW_REVISION) >> $(LEDE_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(LEDE_DIR) defconfig
 
