@@ -93,9 +93,9 @@ patch: stamp-clean-patched .stamp-patched
 
 # lede config
 $(LEDE_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
-	cat $(TARGET_CONFIG) >$(LEDE_DIR)/.config
-	sed -i '/^CONFIG_VERSION_NUMBER=/d' $(LEDE_DIR)/.config 
-	echo CONFIG_VERSION_NUMBER=$$(FW_REVISION) >> $(LEDE_DIR)/.config
+	cat $(TARGET_CONFIG) >$(LEDE_DIR)/.config && \
+	sed -i '/^CONFIG_VERSION_NUMBER=/d' $(LEDE_DIR)/.config && \
+	echo "CONFIG_VERSION_NUMBER=$$FW_REVISION" >> $(LEDE_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(LEDE_DIR) defconfig
 
