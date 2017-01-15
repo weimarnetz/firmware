@@ -124,39 +124,8 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	mkdir -p $(IB_BUILD_DIR)
 	$(eval TOOLCHAIN_PATH := $(shell printf "%s:" $(LEDE_DIR)/staging_dir/toolchain-*/bin))
 	$(eval IB_FILE := $(shell ls $(LEDE_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz))
-	cd $(IB_BUILD_DIR); tar xf $(IB_FILE)
-	# shorten dir name to prevent too long paths
-	mv $(IB_BUILD_DIR)/$(shell basename $(IB_FILE) .tar.xz) $(IB_BUILD_DIR)/imgbldr
-	export PATH=$(PATH):$(TOOLCHAIN_PATH); \
-	PACKAGES_PATH="$(FW_DIR)/packages"; \
-	for PROFILE_ITER in $(PROFILES); do \
-	  for PACKAGES_FILE in $(PACKAGES_LIST_DEFAULT); do \
-	    PROFILE=$$PROFILE_ITER \
-	    CUSTOM_POSTINST_PARAM=""; \
-	    if [[ $$PROFILE =~ ":" ]]; then \
-	      SUFFIX="$$(echo $$PROFILE | cut -d':' -f 2)"; \
-	      PACKAGES_SUFFIXED="$${PACKAGES_FILE}_$${SUFFIX}"; \
-	      if [[ -f "$$PACKAGES_PATH/$$PACKAGES_SUFFIXED.txt" ]]; then \
-	        PACKAGES_FILE="$$PACKAGES_SUFFIXED"; \
-	        PROFILE=$$(echo $$PROFILE | cut -d':' -f 1); \
-	      fi; \
-	    fi; \
-	    if [[ -f "$$PACKAGES_PATH/$$PACKAGES_FILE.sh" ]]; then \
-	      CUSTOM_POSTINST_PARAM="CUSTOM_POSTINST_SCRIPT=$$PACKAGES_PATH/$$PACKAGES_FILE.sh"; \
-	    fi; \
-	    PACKAGES_FILE_ABS="$$PACKAGES_PATH/$$PACKAGES_FILE.txt"; \
-	    PACKAGES_LIST=$$(grep -v '^\#' $$PACKAGES_FILE_ABS | tr -t '\n' ' '); \
-	    $(UMASK);\
-	    echo -e "\n *** Building image file for profile \"$${PROFILE}\" with packages list \"$${PACKAGES_FILE}\".\n"; \
-	    $(MAKE) -C $(IB_BUILD_DIR)/imgbldr image PROFILE="$$PROFILE" PACKAGES="$$PACKAGES_LIST" BIN_DIR="$(IB_BUILD_DIR)/imgbldr/bin/$$PACKAGES_FILE" $$CUSTOM_POSTINST_PARAM || exit 1; \
-	  done; \
-	done
 	mkdir -p $(FW_TARGET_DIR)
-	for DIR_ABS in $(IB_BUILD_DIR)/imgbldr/bin/*; do \
-	  TARGET_DIR=$(FW_TARGET_DIR)/$$(basename $$DIR_ABS); \
-	  rm -rf $$TARGET_DIR; \
-	  mv $$DIR_ABS $$TARGET_DIR; \
-	done
+	./assemble_firmware.sh -p "$(PROFILES)" -i $(IB_FILE) -t $(FW_TARGET_DIR) -u "$(PACKAGES_LIST_DEFAULT)"
 	# copy imagebuilder, sdk and toolchain (if existing)
 	cp $$(find $(LEDE_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
