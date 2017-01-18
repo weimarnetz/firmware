@@ -30,7 +30,7 @@ build:ar71xx:
       - firmwares
      expire_in: 1 day
     dependencies: 
-	- build:prepare
+      - build:prepare
 
 build:ramips_mt7620:
     stage: build
@@ -42,7 +42,7 @@ build:ramips_mt7620:
       - firmwares
      expire_in: 1 day
     dependencies: 
-	- build:prepare
+      - build:prepare
 
 build:ramips_mt7628:
     stage: build
@@ -54,7 +54,7 @@ build:ramips_mt7628:
       - firmwares
      expire_in: 1 day
     dependencies: 
-	- build:prepare 
+      - build:prepare 
 
 build:x86:
     stage: build
@@ -67,7 +67,7 @@ build:x86:
       - firmwares
      expire_in: 1 day
     dependencies:
-	- build:prepare 
+     - build:prepare 
 
 
 build:uml:
@@ -81,7 +81,7 @@ build:uml:
       - firmwares
      expire_in: 1 day
     dependencies:
-	- prepare
+      - build:prepare
              
 deploy:
     stage: deploy
