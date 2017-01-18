@@ -20,6 +20,7 @@ build:prepare:
      - chown -R nobody . 
      - sudo -u nobody make prepare
      - sudo -u nobody sh -c "cd lede && make prepare -j$(nproc)"
+     - sudo -u nobody sh -c "cd lede && make clean"
     artifacts:
      paths:
       - lede 
