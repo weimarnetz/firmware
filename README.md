@@ -80,9 +80,16 @@ firmwares/            - Folder where the final images end up
 
 ```
 $ git clone https://gitlab.bau-ha.us/weimarnetz/firmware
-
 $ cd firmware
-$ make TARGET=arch (+LEDE build flags i.e. -j$(nproc), V=s ...) 
+// build all images for ar71xx
+$ make (+LEDE build flags i.e. -j$(nproc), V=s ...) 
+// build for x86
+$ make TARGET=x86
+// build for ramips_mt7268 
+$ make TARGET=ramips_mt7268 
+// look at debug messages, when building UML
+$ make TARGET=uml V=s 
+...
 ``` 
 
 ### UML 
