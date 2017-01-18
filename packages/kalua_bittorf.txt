@@ -21,19 +21,6 @@ ip-full
 
 # GUI-basics
 uhttpd
-luci-mod-admin-full
-luci-mod-freifunk
-luci-app-olsr
-luci-app-olsr-services
-luci-app-owm
-luci-app-owm-ant
-luci-app-owm-cmd
-luci-theme-bootstrap
-# GUI addon
-luci-i18n-base-de
-luci-i18n-base-en
-luci-i18n-olsr-de
-luci-i18n-olsr-en
 
 # OLSR
 olsrd
@@ -48,7 +35,6 @@ olsrd-mod-dyn-gw
 vtun
 
 # Weimarnetz
-kalua
-luci-weimar-splash
+kalua-bittorf
 kmod-sched
 tc

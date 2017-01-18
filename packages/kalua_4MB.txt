@@ -1,0 +1,46 @@
+-kmod-usb-core
+-kmod-usb2
+-kmod-ledtrig-usbdev
+-kmod-usb-ohci
+-kmod-ppp
+-kmod-usb-serial
+-ppp
+-ppp-mod-pppoe
+-wpad
+-wpad-mini
+-opkg
+-usign
+-firewall
+
+# Defaults
+hostapd-mini
+tc
+kmod-ipt-nat
+
+# Common
+dnsmasq
+iwinfo
+libiwinfo-lua
+
+# GUI
+luci-mod-admin-full
+luci-mod-freifunk
+luci-theme-bootstrap
+uhttpd
+luci-app-owm
+luci-app-owm-cmd
+-freifunk-firewall
+
+# OLSR
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-nameservice
+olsrd-mod-txtinfo
+olsrd-mod-dyn-gw
+
+# VPN
+vtun
+
+# kalua
+kalua-trunk
