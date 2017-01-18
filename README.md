@@ -76,6 +76,44 @@ firmwares/            - Folder where the final images end up
 
 ```
 
+## Usage 
+
+```
+$ git clone https://gitlab.bau-ha.us/weimarnetz/firmware
+
+$ cd firmware
+$ make TARGET=arch (+LEDE build flags i.e. -j$(nproc), V=s ...) 
+``` 
+
+### UML 
+
+User Mode Linux is pretty great. It's basically a Linux kernel as an ELF-Binary. 
+
+```
+$ make TARGET=uml -j$(nproc) 
+...
+$ cd firmwares/v0.4.1-3-gd598b2d-dirty+lede-r3018-2b84dfa/uml/kalua
+$ ./weimarnetz-snapshot-v0.4.1-3-gd598b2d-dirty+lede-r3018-2b84dfa-uml-vmlinux \ 
+        ubd0=weimarnetz-snapshot-v0.4.1-3-gd598b2d-dirty+lede-r3018-2b84dfa-uml-ext4.img
+        Core dump limits :
+	soft - 0
+	hard - NONE
+Checking that ptrace can change system call numbers...OK
+Checking syscall emulation patch for ptrace...OK
+Checking advanced syscall emulation patch for ptrace...OK
+Checking environment variables for a tempdir...none found
+Checking if /dev/shm is on tmpfs...OK
+Checking PROT_EXEC mmap in /dev/shm...OK
+Adding 17874944 bytes to physical memory to account for exec-shield gap
+[    0.000000] Linux version 4.4.42 (riso3860@webis3) (gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.4) ) #0 Wed Jan 18 07:54:58 2017
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 12384
+[    0.000000] Kernel command line: ubd0=weimarnetz-snapshot-v0.4.1-3-gd598b2d-dirty+lede-r3018-2b84dfa-uml-ext4.img root=98:0
+``` 
+
+Networking is possible. [Some docs](https://vincent.bernat.im/en/blog/2011-uml-network-lab.html#networking)
+
+
+
 ## Adding a package 
 
 Run a build first and `cd` in the `lede` folder and use `make menuconfig` to the select the package you want. If it's not in the default `feeds.conf` add the package feed for that package. 
