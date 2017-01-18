@@ -9,6 +9,11 @@ cache:
     paths:
      - dl
 
+stages:
+  - prepare
+  - build
+  - deploy
+
 build:prepare:
     stage: prepare
     script:
