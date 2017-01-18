@@ -20,11 +20,11 @@ Successful builds end up at http://weimarnetz.segfault.gq/firmwares
               |         |          | kalua         - git master from weimarnetz
               |         |          | kalua_bittorf - git master from bittorf/kalua
               |         |
-              |         | ar71xx - most routers
+              |         | ar71xx   - most routers with Atheros SoCs
               |         | ... 
-              |         | x86    - 32bit x86 + vm images
-              |         | uml    - user mode linux
-              |         | 
+              |         | x86      - 32bit x86 + vm images
+              |         | uml      - user mode linux
+              |         | ramips_* - most Mediatek SoCs
               |
               | git describe --always from this repo + LEDE revision + shorthash
 
@@ -60,9 +60,9 @@ Where can I change something? What does these files do?
 config.mk             - LEDE git repository, revision, select what package lists to build
 feeds.conf            - LEDE feeds.conf that is used for the package feeds during build
 
-patches               - Patches against the LEDE directory 
-packages              - Package Lists 
-profiles              - List of router profiles for each architecture - names come from the Imagebuilder
+patches/              - Patches against the LEDE directory 
+packages/             - Package Lists 
+profiles/             - List of router profiles for each architecture - names come from the Imagebuilder
 
 :: Building 
 
@@ -70,8 +70,20 @@ Makefile              - Does all the stuff. Cloning and Updating LEDE, patching,
 assemble_firmware.sh  - Script for running the Imagebuilder for a target
 
 
-:: Result 
+:: Images  
 
-firmwares             - Folder where the build images end up
+firmwares/            - Folder where the final images end up 
+
 ```
 
+## Adding a package 
+
+Run a build first and `cd` in the `lede` folder and use `make menuconfig` to the select the package you want. If it's not in the default `feeds.conf` add the package feed for that package. 
+
+Use `./scripts/diffconfig.sh` in the `lede` folder to the symbol for the package or grep for the name in `lede/.config` 
+
+Add the symbol to `configs/common.config` 
+
+i.e. `echo "CONFIG_PACKAGE_tmux=m" >> configs/common.config`
+
+You can now use the package name in the package 
