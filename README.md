@@ -4,7 +4,7 @@
 
 Builds Images with Freifunk Firmware :)
 
-This is based on the firmware building code from [Freifunk Berlin](https://github.com/freifunk-berlin/firmware).
+This is based on the firmware building code from [Freifunk Berlin](https://github.com/freifunk-berlin/firmware). Most of the documentation also applies here. 
 
 
 
@@ -133,11 +133,33 @@ i.e. `echo "CONFIG_PACKAGE_tmux=m" >> configs/common.config`
 
 You can now use the package name in the package list file. 
 
-## Adding a model 
+## Adding a new router model to an existing architecture
 
 Everything that is in the [ToH](https://lede-project.org/toh/start) should work at least in theory. Wifi should be ath9k / ath10k. Mediatek Wifi is untested. 
 You can use the Imagebuilder to get a list of all supported models for a platform. You can also look in the [source](https://git.lede-project.org/?p=source.git;a=tree;f=target/linux/ar71xx/image) for model names. 
 
 Just put the name in the `/profiles/<target>.profiles` and it should work. 
+
+## Add, modify or delete a patch
+
+In order to add, modify or delete a patch run:
+
+    $ make clean pre-patch
+
+Then switch to the LEDE directory:
+
+    $ cd lede
+
+Now you can use the quilt commands as described in the [OpenWrt wiki](https://wiki.openwrt.org/doc/devel/patches).
+
+### Example: add a patch
+
+```
+quilt push -a                 # apply all patches
+quilt new 008-awesome.patch   # tell quilt to create a new patch
+quilt edit somedir/somefile1  # edit files
+quilt edit somedir/somefile2
+quilt refresh                 # creates/updates the patch file
+```
 
 ...
