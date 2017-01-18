@@ -9,39 +9,52 @@ cache:
     paths:
      - dl
 
+prepare:
+    stage: prepare
+    script:
+     - chown -R nobody . 
+     - sudo -u nobody make prepare
+     - sudo -u nobody cd lede && make prepare -j$(nproc)
+    artifacts:
+     paths:
+      - lede 
+     expire_in: 1 day 
+
 build:ar71xx:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ar71xx -j$(grep ^processor /proc/cpuinfo | wc -l)
-     - cd lede; sudo -u nobody make clean
+     - sudo -u nobody make TARGET=ar71xx -j$(nproc)
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies: 
+	- prepare
 
 build:ramips_mt7620:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7620 -j$(grep ^processor /proc/cpuinfo | wc -l)
-     - cd lede; sudo -u nobody make clean
+     - sudo -u nobody make TARGET=ramips_mt7620 -j$(nproc)
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
-
+    dependencies: 
+	- prepare
 
 build:ramips_mt7628:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7628 -j$(grep ^processor /proc/cpuinfo | wc -l)
-     - cd lede; sudo -u nobody make clean
+     - sudo -u nobody make TARGET=ramips_mt7628 -j$(nproc)
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies: 
+	- prepare 
 
 build:x86:
     stage: build
@@ -53,6 +66,9 @@ build:x86:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies:
+	- prepare 
+
 
 build:uml:
     stage: build
@@ -64,6 +80,8 @@ build:uml:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies:
+	- prepare
              
 deploy:
     stage: deploy
@@ -72,4 +90,3 @@ deploy:
      - ssh-add <(echo "${SSH_PRIVATE_KEY}") 
      - echo "${SSH_HOST_KEY}" > hostkey 
      - rsync -hrvz -e 'ssh -o "UserKnownHostsFile hostkey"' firmwares firmware@weimarnetz.segfault.gq:/
-
