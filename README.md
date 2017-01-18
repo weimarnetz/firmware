@@ -86,4 +86,13 @@ Add the symbol to `configs/common.config`
 
 i.e. `echo "CONFIG_PACKAGE_tmux=m" >> configs/common.config`
 
-You can now use the package name in the package 
+You can now use the package name in the package list file. 
+
+## Adding a model 
+
+Everything that is in the [ToH](https://lede-project.org/toh/start) should work at least in theory. Wifi should be ath9k / ath10k. Mediatek Wifi is untested. 
+You can use the Imagebuilder to get a list of all supported models for a platform. You can also look in the [source](https://git.lede-project.org/?p=source.git;a=tree;f=target/linux/ar71xx/image) for model names. 
+
+Just put the name in the `/profiles/<target>.profiles` and it should work. 
+
+...
