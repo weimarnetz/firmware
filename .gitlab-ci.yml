@@ -17,7 +17,8 @@ stages:
 prepare:
     stage: prepare
     script: 
-     - chown -R nobody . 
+     - chown -R nobody .
+     - sudo -u nobody make prepare
      - sudo -u nobody sh -c "cd lede; make prepare -j$(nproc) CONFIG_AUTOREMOVE=y"
     artifacts:
      paths:
