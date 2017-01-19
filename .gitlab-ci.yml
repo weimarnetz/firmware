@@ -9,23 +9,6 @@ cache:
     paths:
      - dl
 
-stages:
-  - prepare
-  - build
-  - deploy
-
-prepare:
-    stage: prepare
-    script:
-     - chown -R nobody . 
-     - sudo -u nobody make prepare
-     - sudo -u nobody sh -c "cd lede && make prepare -j$(nproc)"
-    artifacts:
-     untracked: true
-     paths:
-      - lede 
-     expire_in: 1 day 
-
 build:ar71xx:
     stage: build
     script:
@@ -60,8 +43,7 @@ build:x86:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=x86 -j$(grep ^processor /proc/cpuinfo | wc -l)
-     - cd lede; sudo -u nobody make clean
+     - sudo -u nobody make TARGET=x86 -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -72,8 +54,7 @@ build:uml:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=uml -j$(grep ^processor /proc/cpuinfo | wc -l)
-     - cd lede; sudo -u nobody make clean
+     - sudo -u nobody make TARGET=uml -j$(nproc)
     artifacts:
      paths:
       - firmwares
