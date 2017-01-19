@@ -14,14 +14,14 @@ stages:
   - build
   - deploy
 
-build:prepare:
+prepare:
     stage: prepare
     script:
      - chown -R nobody . 
      - sudo -u nobody make prepare
      - sudo -u nobody sh -c "cd lede && make prepare -j$(nproc)"
-     - sudo -u nobody sh -c "cd lede && make clean"
     artifacts:
+     untracked: true
      paths:
       - lede 
      expire_in: 1 day 
@@ -35,8 +35,6 @@ build:ar71xx:
      paths:
       - firmwares
      expire_in: 1 day
-    dependencies: 
-      - build:prepare
 
 build:ramips_mt7620:
     stage: build
@@ -47,8 +45,6 @@ build:ramips_mt7620:
      paths:
       - firmwares
      expire_in: 1 day
-    dependencies: 
-      - build:prepare
 
 build:ramips_mt7628:
     stage: build
@@ -59,8 +55,6 @@ build:ramips_mt7628:
      paths:
       - firmwares
      expire_in: 1 day
-    dependencies: 
-      - build:prepare 
 
 build:x86:
     stage: build
@@ -72,8 +66,6 @@ build:x86:
      paths:
       - firmwares
      expire_in: 1 day
-    dependencies:
-     - build:prepare 
 
 
 build:uml:
@@ -86,8 +78,6 @@ build:uml:
      paths:
       - firmwares
      expire_in: 1 day
-    dependencies:
-      - build:prepare
              
 deploy:
     stage: deploy
