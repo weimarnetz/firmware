@@ -1,86 +1,87 @@
-image: ubuntu:latest
+image: ubuntu:16.04
 
 before_script:
 - apt-get update -yqq
 - apt-get install sudo git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync -yqq
 
-cache:
-    paths:
-     - dl
+stages:
+  - prepare
+  - build
+  - deploy
 
-stages: 
-    - prepare
-    - build:ar71xx
-    - build:ramips_mt7620
-    - build:ramips_mt7628
-    - build:x86
-    - build:uml
-    - deploy
-
-prepare:
+build:prepare:
     stage: prepare
     script:
-     - rm -rf /cache/build # clean start
-     - mkdir -p /cache/build/$CI_PIPELINE_ID || echo "build dir already there"
-     - chown -R nobody:nogroup /cache/build && chmod 777 /cache/build #yolo
+     - chown -R nobody . 
+     - sudo -u nobody make prepare
+     - sudo -u nobody sh -c "cd build/lede && make prepare -j$(nproc) CONFIG_AUTOREMOVE=y"
+    artifacts:
+     paths:
+      - build 
+     expire_in: 1 day 
 
 build:ar71xx:
-    stage: build:ar71xx
+    stage: build
     script:
-     - ln -s /cache/build/$CI_PIPELINE_ID build
-     - touch build
-     - chown -R nobody:nogroup .
-     - sudo -u nobody make TARGET=ar71xx  -j$(nproc)
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=ar71xx -j$(nproc) CONFIG_AUTOREMOVE=y
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies: 
+      - build:prepare
 
 build:ramips_mt7620:
-    stage: build:ramips_mt7620
+    stage: build
     script:
-     - ln -s /cache/build/$CI_PIPELINE_ID build
-     - touch build # fixing mtime?
-     - chown -R nobody:nogroup .
-     - sudo -u nobody make TARGET=ramips_mt7620  -j$(nproc)
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=ramips_mt7620 -j$(nproc) CONFIG_AUTOREMOVE=y
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies: 
+      - build:prepare
 
 build:ramips_mt7628:
-    stage: build:ramips_mt7628
+    stage: build
     script:
-     - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody:nogroup .
-     - sudo -u nobody make TARGET=ramips_mt7628  -j$(nproc)
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=ramips_mt7628 -j$(nproc) CONFIG_AUTOREMOVE=y
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies: 
+      - build:prepare 
 
 build:x86:
-    stage: build:x86
+    stage: build
     script:
-     - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody:nogroup .
-     - sudo -u nobody make TARGET=x86  -j$(nproc)
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=x86 -j$(nproc) CONFIG_AUTOREMOVE=y
+     - cd lede; sudo -u nobody make clean
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies:
+     - build:prepare 
 
 
 build:uml:
-    stage: build:uml
+    stage: build
     script:
-     - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody:nogroup .
-     - sudo -u nobody make TARGET=uml  -j$(nproc)
+     - chown -R nobody .
+     - sudo -u nobody make TARGET=uml -j$(nproc) CONFIG_AUTOREMOVE=y
+     - cd lede; sudo -u nobody make clean
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
+    dependencies:
+      - build:prepare
              
 deploy:
     stage: deploy
