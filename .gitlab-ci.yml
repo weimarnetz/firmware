@@ -4,6 +4,11 @@ before_script:
 - apt-get update -yqq
 - apt-get install sudo git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync -yqq
 
+cache:
+    key: "$CI_BUILD_REF_NAME"
+    paths:
+     - dl
+
 stages: 
     - prepare
     - build:ar71xx
@@ -18,13 +23,14 @@ prepare:
     script:
      - rm -rf /cache/build # clean start
      - mkdir -p /cache/build/$CI_PIPELINE_ID || echo "build dir already there"
-     - chown -R nobody:nogroup /cache/build
+     - chown -R nobody:nogroup /cache/build && chmod 777 /cache/build #yolo
 
 build:ar71xx:
     stage: build:ar71xx
     script:
      - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody .
+     - touch build
+     - chown -R nobody:nogroup .
      - sudo -u nobody make TARGET=ar71xx  -j$(nproc)
     artifacts:
      paths:
@@ -35,7 +41,8 @@ build:ramips_mt7620:
     stage: build:ramips_mt7620
     script:
      - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody .
+     - touch build # fixing mtime?
+     - chown -R nobody:nogroup .
      - sudo -u nobody make TARGET=ramips_mt7620  -j$(nproc)
     artifacts:
      paths:
@@ -46,7 +53,7 @@ build:ramips_mt7628:
     stage: build:ramips_mt7628
     script:
      - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody .
+     - chown -R nobody:nogroup .
      - sudo -u nobody make TARGET=ramips_mt7628  -j$(nproc)
     artifacts:
      paths:
@@ -57,7 +64,7 @@ build:x86:
     stage: build:x86
     script:
      - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody .
+     - chown -R nobody:nogroup .
      - sudo -u nobody make TARGET=x86  -j$(nproc)
     artifacts:
      paths:
@@ -69,7 +76,7 @@ build:uml:
     stage: build:uml
     script:
      - ln -s /cache/build/$CI_PIPELINE_ID build
-     - chown -R nobody .
+     - chown -R nobody:nogroup .
      - sudo -u nobody make TARGET=uml  -j$(nproc)
     artifacts:
      paths:
