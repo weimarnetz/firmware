@@ -21,8 +21,8 @@ kmod-sched-cake
 # GUI-basics
 uhttpd
 # GUI addon
-luci2-app-olsrd2
-luci2-app-ffwizard
+#luci2-app-olsrd2
+#luci2-app-ffwizard
 
 # OLSR
 oonf-olsrd2
@@ -33,3 +33,4 @@ tunneldigger
 464xlat
 tc
 kadnode
+luci2-ffwizard
