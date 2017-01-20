@@ -1,6 +1,6 @@
 --- a/target/linux/ar71xx/image/generic.mk
 +++ b/target/linux/ar71xx/image/generic.mk
-@@ -320,7 +320,7 @@ TARGET_DEVICES += rnx-n360rt
+@@ -417,7 +417,7 @@ TARGET_DEVICES += rnx-n360rt
  define Device/mc-mac1200r
    $(Device/tplink-8mlzma)
    DEVICE_TITLE := MERCURY MAC1200R
@@ -9,7 +9,7 @@
    BOARDNAME := MC-MAC1200R
    DEVICE_PROFILE := MAC1200R
    TPLINK_HWID := 0x12000001
-@@ -412,7 +412,7 @@ TARGET_DEVICES += oolite
+@@ -527,7 +527,7 @@ TARGET_DEVICES += oolite
  
  define Device/NBG6616
    DEVICE_TITLE := ZyXEL NBG6616
@@ -18,7 +18,7 @@
    BOARDNAME = NBG6616
    KERNEL_SIZE = 2048k
    IMAGE_SIZE = 15323k
-@@ -518,7 +518,7 @@ endef
+@@ -633,7 +633,7 @@ endef
  define Device/dir-869-a1
  $(Device/seama)
    DEVICE_TITLE := D-Link DIR-869 rev. A1
@@ -27,7 +27,7 @@
    BOARDNAME = DIR-869-A1
    IMAGE_SIZE = 15872k
    MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,64k(devdata)ro,64k(devconf)ro,15872k(firmware),64k(radiocfg)ro
-@@ -552,7 +552,7 @@ endef
+@@ -667,7 +667,7 @@ endef
  define Device/qihoo-c301
  $(Device/seama)
    DEVICE_TITLE := Qihoo C301
@@ -38,7 +38,7 @@
    MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),64k(devdata),64k(devconf),15744k(firmware),64k(warm_start),64k(action_image_config),64k(radiocfg)ro;spi0.1:15360k(upgrade2),1024k(privatedata)
 --- a/target/linux/ar71xx/image/legacy-devices.mk
 +++ b/target/linux/ar71xx/image/legacy-devices.mk
-@@ -260,7 +260,7 @@ LEGACY_DEVICES += YUN_16M
+@@ -206,7 +206,7 @@ LEGACY_DEVICES += YUN_16M
  define LegacyDevice/F9K1115V2
    DEVICE_TITLE := Belkin AC1750DB (F9K1115V2)
    DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb3 kmod-usb-ledtrig-usbport \
@@ -47,7 +47,7 @@
  endef
  LEGACY_DEVICES += F9K1115V2
  
-@@ -342,13 +342,13 @@ LEGACY_DEVICES += DIR505A1
+@@ -288,13 +288,13 @@ LEGACY_DEVICES += DIR505A1
  
  define LegacyDevice/DGL5500A1
    DEVICE_TITLE := D-Link DGL-5500 rev. A1
@@ -63,7 +63,7 @@
  endef
  LEGACY_DEVICES += TEW823DRU
  
-@@ -417,7 +417,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
+@@ -363,7 +363,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
  
  define LegacyDevice/dLAN_pro_1200_ac
    DEVICE_TITLE := devolo dLAN pro 1200+ WiFi ac
@@ -72,7 +72,7 @@
  endef
  LEGACY_DEVICES += dLAN_pro_1200_ac
  
-@@ -429,13 +429,13 @@ LEGACY_DEVICES += ESR900
+@@ -375,13 +375,13 @@ LEGACY_DEVICES += ESR900
  
  define LegacyDevice/ESR1750
    DEVICE_TITLE := EnGenius ESR1750
@@ -88,7 +88,7 @@
  endef
  LEGACY_DEVICES += EPG5000
  
-@@ -537,7 +537,7 @@ LEGACY_DEVICES += OM5P
+@@ -482,7 +482,7 @@ LEGACY_DEVICES += OM5P
  
  define LegacyDevice/OM5PAC
    DEVICE_TITLE := OpenMesh OM5P-AC/OM5P-ACv2
@@ -97,7 +97,7 @@
  endef
  LEGACY_DEVICES += OM5PAC
  
-@@ -555,7 +555,7 @@ LEGACY_DEVICES += MR900
+@@ -500,7 +500,7 @@ LEGACY_DEVICES += MR900
  
  define LegacyDevice/MR1750
    DEVICE_TITLE := OpenMesh MR1750/MR1750v2
@@ -108,16 +108,16 @@
  
 --- a/target/linux/ar71xx/image/tp-link.mk
 +++ b/target/linux/ar71xx/image/tp-link.mk
-@@ -181,7 +181,7 @@ TARGET_DEVICES += tl-wdr3500-v1 tl-wdr36
+@@ -223,7 +223,7 @@ TARGET_DEVICES += tl-wdr3500-v1 tl-wdr36
  define Device/tl-wdr6500-v2
  $(Device/tplink-8mlzma)
    DEVICE_TITLE := TP-LINK TL-WDR6500v2
 -  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
 +  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k-ct ath10k-firmware-qca988x-ct
    KERNEL := kernel-bin | patch-cmdline | lzma | uImage lzma
-   KERNEL_INITRAMFS := kernel-bin | patch-cmdline | lzma | uImage lzma | mktplinkfw-initramfs
+   KERNEL_INITRAMFS := kernel-bin | patch-cmdline | lzma | uImage lzma | mktplinkfw-combined
    BOARDNAME = TL-WDR6500-v2
-@@ -205,7 +205,7 @@ TARGET_DEVICES += tl-wdr3320-v2
+@@ -247,7 +247,7 @@ TARGET_DEVICES += tl-wdr3320-v2
  define Device/archer-c5-v1
      $(Device/tplink-16mlzma)
      DEVICE_TITLE := TP-LINK Archer C5
@@ -126,7 +126,7 @@
      BOARDNAME := ARCHER-C5
      DEVICE_PROFILE := ARCHERC7
      TPLINK_HWID := 0xc5000001
-@@ -214,7 +214,7 @@ endef
+@@ -256,7 +256,7 @@ endef
  define Device/archer-c7-v1
      $(Device/tplink-8mlzma)
      DEVICE_TITLE := TP-LINK Archer C7 v1
@@ -135,7 +135,7 @@
      BOARDNAME := ARCHER-C7
      DEVICE_PROFILE := ARCHERC7
      TPLINK_HWID := 0x75000001
-@@ -223,7 +223,7 @@ endef
+@@ -265,7 +265,7 @@ endef
  define Device/archer-c7-v2
      $(Device/tplink-16mlzma)
      DEVICE_TITLE := TP-LINK Archer C7 v2
@@ -144,7 +144,7 @@
      BOARDNAME := ARCHER-C7-V2
      DEVICE_PROFILE := ARCHERC7
      TPLINK_HWID := 0xc7000002
-@@ -235,7 +235,7 @@ endef
+@@ -277,7 +277,7 @@ endef
  define Device/archer-c7-v2-il
      $(Device/tplink-16mlzma)
      DEVICE_TITLE := TP-LINK Archer C7 v2 IL
@@ -153,7 +153,7 @@
      BOARDNAME := ARCHER-C7-V2
      DEVICE_PROFILE := ARCHERC7
      TPLINK_HWID := 0xc7000002
-@@ -245,7 +245,7 @@ endef
+@@ -287,7 +287,7 @@ endef
  define Device/tl-wdr7500-v3
      $(Device/tplink-8mlzma)
      DEVICE_TITLE := TP-LINK Archer C7 v3
@@ -164,7 +164,7 @@
      TPLINK_HWID := 0x75000003
 --- a/target/linux/ar71xx/image/ubnt.mk
 +++ b/target/linux/ar71xx/image/ubnt.mk
-@@ -127,7 +127,7 @@ endef
+@@ -128,7 +128,7 @@ endef
  define Device/ubnt-unifiac-lite
    $(Device/ubnt-unifiac)
    DEVICE_TITLE := Ubiquiti UniFi AC-Lite
@@ -173,7 +173,7 @@
    DEVICE_PROFILE := UBNT UBNTUNIFIACLITE
    BOARDNAME := UBNT-UF-AC-LITE
  endef
-@@ -135,7 +135,7 @@ endef
+@@ -136,7 +136,7 @@ endef
  define Device/ubnt-unifiac-pro
    $(Device/ubnt-unifiac)
    DEVICE_TITLE := Ubiquiti UniFi AC-Pro

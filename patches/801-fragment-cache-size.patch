@@ -1,6 +1,6 @@
 --- a/target/linux/generic/config-4.4
 +++ b/target/linux/generic/config-4.4
-@@ -3987,7 +3987,7 @@ CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU=y
+@@ -3997,7 +3997,7 @@ CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU=y
  # CONFIG_SQUASHFS_EMBEDDED is not set
  # CONFIG_SQUASHFS_FILE_CACHE is not set
  CONFIG_SQUASHFS_FILE_DIRECT=y
