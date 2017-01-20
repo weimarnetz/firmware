@@ -14,7 +14,7 @@ prepare:
     script: 
      - mkdir /cache/build
      - ln -s /cache/build build
-     -chown -R nobody . 
+     - chown -R nobody . 
      - sudo -u nobody make prepare
      - sudo -u nobody sh -c "cd lede; make prepare -j$(nproc) "
 
