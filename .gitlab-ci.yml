@@ -1,4 +1,4 @@
-image: ubuntu:16.04
+image: ubuntu:latest
 
 before_script:
 - apt-get update -yqq
@@ -29,7 +29,7 @@ build:ar71xx:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ar71xx -j$(nproc)
+     - sudo -u nobody make TARGET=ar71xx CONFIG_AUTOREMOVE=y -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -39,7 +39,7 @@ build:ramips_mt7620:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7620 -j$(nproc)
+     - sudo -u nobody make TARGET=ramips_mt7620 CONFIG_AUTOREMOVE=y -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -49,7 +49,7 @@ build:ramips_mt7628:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7628 -j$(nproc)
+     - sudo -u nobody make TARGET=ramips_mt7628 CONFIG_AUTOREMOVE=y -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -59,7 +59,7 @@ build:x86:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=x86 -j$(nproc)
+     - sudo -u nobody make TARGET=x86 CONFIG_AUTOREMOVE=y -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -70,7 +70,7 @@ build:uml:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=uml -j$(nproc)
+     - sudo -u nobody make TARGET=uml CONFIG_AUTOREMOVE=y -j$(nproc)
     artifacts:
      paths:
       - firmwares
