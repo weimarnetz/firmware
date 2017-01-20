@@ -17,13 +17,13 @@ prepare:
     stage: prepare
     script:
      - rm -rf /cache/build # clean start
-     - mkdir /cache/build || echo "build dir already there"
+     - mkdir -p /cache/build/$CI_PIPELINE_ID || echo "build dir already there"
      - chown -R nobody:nogroup /cache/build
 
 build:ar71xx:
     stage: build:ar71xx
     script:
-     - ln -s /cache/build build
+     - ln -s /cache/build/$CI_PIPELINE_ID build
      - chown -R nobody .
      - sudo -u nobody make TARGET=ar71xx  -j$(nproc)
     artifacts:
@@ -34,7 +34,7 @@ build:ar71xx:
 build:ramips_mt7620:
     stage: build:ramips_mt7620
     script:
-     - ln -s /cache/build build
+     - ln -s /cache/build/$CI_PIPELINE_ID build
      - chown -R nobody .
      - sudo -u nobody make TARGET=ramips_mt7620  -j$(nproc)
     artifacts:
@@ -45,7 +45,7 @@ build:ramips_mt7620:
 build:ramips_mt7628:
     stage: build:ramips_mt7628
     script:
-     - ln -s /cache/build build
+     - ln -s /cache/build/$CI_PIPELINE_ID build
      - chown -R nobody .
      - sudo -u nobody make TARGET=ramips_mt7628  -j$(nproc)
     artifacts:
@@ -56,7 +56,7 @@ build:ramips_mt7628:
 build:x86:
     stage: build:x86
     script:
-     - ln -s /cache/build build
+     - ln -s /cache/build/$CI_PIPELINE_ID build
      - chown -R nobody .
      - sudo -u nobody make TARGET=x86  -j$(nproc)
     artifacts:
@@ -68,7 +68,7 @@ build:x86:
 build:uml:
     stage: build:uml
     script:
-     - ln -s /cache/build build
+     - ln -s /cache/build/$CI_PIPELINE_ID build
      - chown -R nobody .
      - sudo -u nobody make TARGET=uml  -j$(nproc)
     artifacts:
