@@ -14,7 +14,7 @@ REVISION=git describe --always --dirty
 # set dir and file names
 FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
-LEDE_DIR=$(FW_DIR)/work/lede
+LEDE_DIR=$(FW_DIR)/build/lede
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
 FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(TARGET)
