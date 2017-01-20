@@ -6,21 +6,22 @@ before_script:
 
 stages: 
     - prepare
-    - build
+    - build:ar71xx
+    - build:ramips_mt7620
+    - build:ramips_mt7628
+    - build:x86
+    - build:uml
     - deploy
 
 prepare:
     stage: prepare
-    script: 
+    script:
+     - rm -rf /cache/build # clean start
      - mkdir /cache/build || echo "build dir already there"
      - chown -R nobody:nogroup /cache/build
-     - ln -s /cache/build build
-     - chown -R nobody . 
-     - sudo -u nobody make prepare
-     - sudo -u nobody sh -c "cd lede; make prepare -j$(nproc) "
 
 build:ar71xx:
-    stage: build
+    stage: build:ar71xx
     script:
      - ln -s /cache/build build
      - chown -R nobody .
@@ -31,7 +32,7 @@ build:ar71xx:
      expire_in: 1 day
 
 build:ramips_mt7620:
-    stage: build
+    stage: build:ramips_mt7620
     script:
      - ln -s /cache/build build
      - chown -R nobody .
@@ -42,7 +43,7 @@ build:ramips_mt7620:
      expire_in: 1 day
 
 build:ramips_mt7628:
-    stage: build
+    stage: build:ramips_mt7628
     script:
      - ln -s /cache/build build
      - chown -R nobody .
@@ -53,7 +54,7 @@ build:ramips_mt7628:
      expire_in: 1 day
 
 build:x86:
-    stage: build
+    stage: build:x86
     script:
      - ln -s /cache/build build
      - chown -R nobody .
@@ -65,7 +66,7 @@ build:x86:
 
 
 build:uml:
-    stage: build
+    stage: build:uml
     script:
      - ln -s /cache/build build
      - chown -R nobody .
