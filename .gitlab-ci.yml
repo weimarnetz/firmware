@@ -4,11 +4,6 @@ before_script:
 - apt-get update -yqq
 - apt-get install sudo git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync -yqq
 
-cache:
-    key: "$CI_BUILD_REF_NAME"
-    paths:
-     - dl
-
 stages: 
     - prepare
     - build
@@ -17,19 +12,18 @@ stages:
 prepare:
     stage: prepare
     script: 
-     - chown -R nobody .
+     - mkdir /cache/build
+     - ln -s /cache/build build
+     -chown -R nobody . 
      - sudo -u nobody make prepare
-     - sudo -u nobody sh -c "cd lede; make prepare -j$(nproc) CONFIG_AUTOREMOVE=y"
-    artifacts:
-     paths:
-      - lede
-     expire_in: 1 day
+     - sudo -u nobody sh -c "cd lede; make prepare -j$(nproc) "
 
 build:ar71xx:
     stage: build
     script:
+     - ln -s /cache/build build
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ar71xx CONFIG_AUTOREMOVE=y -j$(nproc)
+     - sudo -u nobody make TARGET=ar71xx  -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -38,8 +32,9 @@ build:ar71xx:
 build:ramips_mt7620:
     stage: build
     script:
+     - ln -s /cache/build build
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7620 CONFIG_AUTOREMOVE=y -j$(nproc)
+     - sudo -u nobody make TARGET=ramips_mt7620  -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -48,8 +43,9 @@ build:ramips_mt7620:
 build:ramips_mt7628:
     stage: build
     script:
+     - ln -s /cache/build build
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7628 CONFIG_AUTOREMOVE=y -j$(nproc)
+     - sudo -u nobody make TARGET=ramips_mt7628  -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -58,8 +54,9 @@ build:ramips_mt7628:
 build:x86:
     stage: build
     script:
+     - ln -s /cache/build build
      - chown -R nobody .
-     - sudo -u nobody make TARGET=x86 CONFIG_AUTOREMOVE=y -j$(nproc)
+     - sudo -u nobody make TARGET=x86  -j$(nproc)
     artifacts:
      paths:
       - firmwares
@@ -69,8 +66,9 @@ build:x86:
 build:uml:
     stage: build
     script:
+     - ln -s /cache/build build
      - chown -R nobody .
-     - sudo -u nobody make TARGET=uml CONFIG_AUTOREMOVE=y -j$(nproc)
+     - sudo -u nobody make TARGET=uml  -j$(nproc)
     artifacts:
      paths:
       - firmwares
