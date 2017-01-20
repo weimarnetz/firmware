@@ -1,5 +1,14 @@
 --- a/target/linux/ar71xx/image/generic.mk
 +++ b/target/linux/ar71xx/image/generic.mk
+@@ -46,7 +46,7 @@ TARGET_DEVICES += cf-e320n-v2
+ 
+ define Device/cf-e380ac-v1
+   DEVICE_TITLE := COMFAST CF-E380AC v1
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k-ct ath10k-firmware-qca988x-ct
+   BOARDNAME = CF-E380AC-V1
+   IMAGE_SIZE = 16128k
+   CONSOLE = ttyS0,115200
 @@ -417,7 +417,7 @@ TARGET_DEVICES += rnx-n360rt
  define Device/mc-mac1200r
    $(Device/tplink-8mlzma)
@@ -9,6 +18,24 @@
    BOARDNAME := MC-MAC1200R
    DEVICE_PROFILE := MAC1200R
    TPLINK_HWID := 0x12000001
+@@ -486,7 +486,7 @@ TARGET_DEVICES += som9331
+ 
+ define Device/sr3200
+   DEVICE_TITLE := YunCore SR3200
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k-ct ath10k-firmware-qca988x-ct
+   BOARDNAME = SR3200
+   IMAGE_SIZE = 16000k
+   CONSOLE = ttyS0,115200
+@@ -497,7 +497,7 @@ TARGET_DEVICES += sr3200
+ define Device/xd3200
+   $(Device/sr3200)
+   DEVICE_TITLE := YunCore XD3200
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
+   BOARDNAME = XD3200
+ endef
+ TARGET_DEVICES += xd3200
 @@ -527,7 +527,7 @@ TARGET_DEVICES += oolite
  
  define Device/NBG6616
@@ -36,6 +63,15 @@
    BOARDNAME = QIHOO-C301
    IMAGE_SIZE = 15744k
    MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),64k(devdata),64k(devconf),15744k(firmware),64k(warm_start),64k(action_image_config),64k(radiocfg)ro;spi0.1:15360k(upgrade2),1024k(privatedata)
+@@ -690,7 +690,7 @@ endef
+ 
+ define Device/dap-2695-a1
+   DEVICE_TITLE := D-Link DAP-2695 rev. A1
+-  DEVICE_PACKAGES := ath10k-firmware-qca988x kmod-ath10k uboot-envtools
++  DEVICE_PACKAGES := ath10k-firmware-qca988x-ct kmod-ath10k-ct uboot-envtools
+   BOARDNAME = DAP-2695-A1
+   IMAGES := factory.img sysupgrade.bin
+   IMAGE_SIZE = 15360k
 --- a/target/linux/ar71xx/image/legacy-devices.mk
 +++ b/target/linux/ar71xx/image/legacy-devices.mk
 @@ -206,7 +206,7 @@ LEGACY_DEVICES += YUN_16M
@@ -108,6 +144,15 @@
  
 --- a/target/linux/ar71xx/image/tp-link.mk
 +++ b/target/linux/ar71xx/image/tp-link.mk
+@@ -137,7 +137,7 @@ TARGET_DEVICES += cpe210-220 cpe510-520
+ 
+ define Device/re450
+   DEVICE_TITLE := TP-LINK RE450
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
+   MTDPARTS := spi0.0:128k(u-boot)ro,1344k(kernel),4672k(rootfs),64k(pation-table)ro,64k(product-info)ro,1856k(config)ro,64k(art)ro,6016k@0x20000(firmware)
+   IMAGE_SIZE := 7936k
+   BOARDNAME := RE450
 @@ -223,7 +223,7 @@ TARGET_DEVICES += tl-wdr3500-v1 tl-wdr36
  define Device/tl-wdr6500-v2
  $(Device/tplink-8mlzma)
@@ -162,6 +207,15 @@
      BOARDNAME := ARCHER-C7
      DEVICE_PROFILE := ARCHERC7
      TPLINK_HWID := 0x75000003
+@@ -416,7 +416,7 @@ TARGET_DEVICES += tl-mr3020-v1 tl-mr3040
+ define Device/tl-wpa8630
+     $(Device/tplink-8mlzma)
+     DEVICE_TITLE := TP-LINK TL-WPA8630
+-    DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++    DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
+     BOARDNAME := TL-WPA8630
+     DEVICE_PROFILE := TL-WPA8630
+     TPLINK_HWID := 0x86300001
 --- a/target/linux/ar71xx/image/ubnt.mk
 +++ b/target/linux/ar71xx/image/ubnt.mk
 @@ -128,7 +128,7 @@ endef
