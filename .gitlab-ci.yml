@@ -12,8 +12,8 @@ stages:
 prepare:
     stage: prepare
     script: 
-     - mkdir /cache/build || echo "already there"
-     - chown -R nobody:nobody /cache/build
+     - mkdir /cache/build || echo "build dir already there"
+     - chown -R nobody:nogroup /cache/build
      - ln -s /cache/build build
      - chown -R nobody . 
      - sudo -u nobody make prepare
