@@ -13,6 +13,7 @@ prepare:
     stage: prepare
     script: 
      - mkdir /cache/build
+     - chown -R nobody:nobody /cache/build
      - ln -s /cache/build build
      - chown -R nobody . 
      - sudo -u nobody make prepare
