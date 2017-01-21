@@ -12,11 +12,11 @@ build:
     stage: build
     script:
      - chown -R nobody .
-     - sudo -u nobody make TARGET=ar71xx -j$(nproc) CONFIG_AUTOREMOVE=y
-     - sudo -u nobody make TARGET=ramips_mt7260 -j$(nproc) CONFIG_AUTOREMOVE=y
-     - sudo -u nobody make TARGET=ramips_mt7268 -j$(nproc) CONFIG_AUTOREMOVE=y
-     - sudo -u nobody make TARGET=x86 -j$(nproc) CONFIG_AUTOREMOVE=y
-     - sudo -u nobody make TARGET=uml -j$(nproc) CONFIG_AUTOREMOVE=y
+     - sudo -u nobody make TARGET=ar71xx -j$(nproc) 
+     - sudo -u nobody make TARGET=ramips_mt7260 -j$(nproc)
+     - sudo -u nobody make TARGET=ramips_mt7268 -j$(nproc)
+     - sudo -u nobody make TARGET=x86 -j$(nproc)
+     - sudo -u nobody make TARGET=uml -j$(nproc)
 
     artifacts:
      paths:

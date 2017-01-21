@@ -50,5 +50,5 @@ vtun
 # Weimarnetz
 kalua-trunk
 luci-weimar-splash
-kmod-sched
+kmod-sched-cake
 tc
