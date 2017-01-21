@@ -1,88 +1,28 @@
-image: ubuntu:16.04
+image: ubuntu:latest
 
 before_script:
 - apt-get update -yqq
 - apt-get install sudo git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync -yqq
 
 stages:
-  - prepare
   - build
   - deploy
 
-build:prepare:
-    stage: prepare
-    script:
-     - chown -R nobody . 
-     - sudo -u nobody make prepare
-     - sudo -u nobody sh -c "cd build/lede && make prepare -j$(nproc) CONFIG_AUTOREMOVE=y"
-    artifacts:
-     paths:
-      - build 
-     expire_in: 1 day 
-
-build:ar71xx:
+build:
     stage: build
     script:
      - chown -R nobody .
      - sudo -u nobody make TARGET=ar71xx -j$(nproc) CONFIG_AUTOREMOVE=y
-    artifacts:
-     paths:
-      - firmwares
-     expire_in: 1 day
-    dependencies: 
-      - build:prepare
-
-build:ramips_mt7620:
-    stage: build
-    script:
-     - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7620 -j$(nproc) CONFIG_AUTOREMOVE=y
-    artifacts:
-     paths:
-      - firmwares
-     expire_in: 1 day
-    dependencies: 
-      - build:prepare
-
-build:ramips_mt7628:
-    stage: build
-    script:
-     - chown -R nobody .
-     - sudo -u nobody make TARGET=ramips_mt7628 -j$(nproc) CONFIG_AUTOREMOVE=y
-    artifacts:
-     paths:
-      - firmwares
-     expire_in: 1 day
-    dependencies: 
-      - build:prepare 
-
-build:x86:
-    stage: build
-    script:
-     - chown -R nobody .
+     - sudo -u nobody make TARGET=ramips_mt7260 -j$(nproc) CONFIG_AUTOREMOVE=y
+     - sudo -u nobody make TARGET=ramips_mt7268 -j$(nproc) CONFIG_AUTOREMOVE=y
      - sudo -u nobody make TARGET=x86 -j$(nproc) CONFIG_AUTOREMOVE=y
-     - cd lede; sudo -u nobody make clean
-    artifacts:
-     paths:
-      - firmwares
-     expire_in: 1 day
-    dependencies:
-     - build:prepare 
-
-
-build:uml:
-    stage: build
-    script:
-     - chown -R nobody .
      - sudo -u nobody make TARGET=uml -j$(nproc) CONFIG_AUTOREMOVE=y
-     - cd lede; sudo -u nobody make clean
+
     artifacts:
      paths:
       - firmwares
      expire_in: 1 day
-    dependencies:
-      - build:prepare
-             
+
 deploy:
     stage: deploy
     script:
