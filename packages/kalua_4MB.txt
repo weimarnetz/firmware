@@ -44,3 +44,4 @@ vtun
 
 # kalua
 kalua-trunk
+kmod-macvlan

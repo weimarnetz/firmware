@@ -51,4 +51,5 @@ vtun
 kalua-trunk
 luci-weimar-splash
 kmod-sched-cake
+kmod-macvlan
 tc
