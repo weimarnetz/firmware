@@ -11,11 +11,14 @@
 -opkg
 -usign
 -firewall
+-freifunk-firewall
 
-# Defaults
 hostapd-mini
 tc
 kmod-ipt-nat
+kmod-sched-cake
+kmod-ifb
+sqm-scripts
 
 # Common
 dnsmasq
@@ -27,9 +30,12 @@ luci-mod-admin-full
 luci-mod-freifunk
 luci-theme-bootstrap
 uhttpd
+
+# owm 
+iwinfo
+libiwinfo-lua
 luci-app-owm
 luci-app-owm-cmd
--freifunk-firewall
 
 # OLSR
 olsrd
