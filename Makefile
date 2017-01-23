@@ -14,10 +14,11 @@ REVISION=git describe --always --dirty
 # set dir and file names
 FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
+FW_BRANCH=$(shell $(GIT_BRANCH))
 LEDE_DIR=$(FW_DIR)/build/lede
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(TARGET)
+FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(FW_BRANCH)/$(TARGET)
 UMASK=umask 022
 
 # if any of the following files have been changed: clean up lede dir
