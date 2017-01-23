@@ -52,4 +52,5 @@ kalua-trunk
 luci-weimar-splash
 kmod-sched-cake
 kmod-ifb
+kmod-macvlan
 sqm-scripts
