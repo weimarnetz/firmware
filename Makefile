@@ -52,7 +52,7 @@ lede-update: stamp-clean-lede-updated .stamp-lede-updated
 	cd $(LEDE_DIR); \
 		git checkout master && \
 		git pull && \
-		git checkout $(LEDE_COMMIT)
+		git checkout --detach $(LEDE_COMMIT)
 	touch $@
 
 # patches require updated lede working copy
