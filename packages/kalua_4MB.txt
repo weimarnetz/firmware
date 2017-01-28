@@ -39,6 +39,7 @@ luci-app-owm-cmd
 
 # OLSR
 olsrd
+olsrd-mod-arproaming
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
 olsrd-mod-nameservice

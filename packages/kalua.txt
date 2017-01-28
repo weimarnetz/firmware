@@ -37,6 +37,7 @@ luci-i18n-olsr-en
 
 # OLSR
 olsrd
+olsrd-mod-arproaming
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
 olsrd-mod-txtinfo
