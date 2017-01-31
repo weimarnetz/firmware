@@ -26,20 +26,19 @@ iwinfo
 libiwinfo-lua
 
 # GUI
--luci-mod-admin-full
--luci-mod-freifunk
--luci-theme-bootstrap
+luci-mod-admin-full
+luci-mod-freifunk
+luci-theme-bootstrap
 uhttpd
 
 # owm 
 iwinfo
 libiwinfo-lua
--luci-app-owm
+luci-app-owm
 luci-app-owm-cmd
 
 # OLSR
 olsrd
-olsrd-mod-arproaming
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
 olsrd-mod-nameservice
@@ -51,4 +50,4 @@ vtun
 
 # kalua
 kalua-trunk
-kmod-macvlan
+luci-weimar-splash

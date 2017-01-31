@@ -17,7 +17,6 @@ ethtool
 dnsmasq
 iwinfo
 libiwinfo-lua
-ip-full
 
 # GUI-basics
 uhttpd
@@ -37,7 +36,6 @@ luci-i18n-olsr-en
 
 # OLSR
 olsrd
-olsrd-mod-arproaming
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
 olsrd-mod-txtinfo
@@ -53,5 +51,4 @@ kalua-trunk
 luci-weimar-splash
 kmod-sched-cake
 kmod-ifb
-kmod-macvlan
 sqm-scripts
