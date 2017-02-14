@@ -17,6 +17,7 @@ ethtool
 dnsmasq
 iwinfo
 libiwinfo-lua
+rpcd-mod-iwinfo
 
 # GUI-basics
 uhttpd
