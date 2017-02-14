@@ -2,7 +2,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
 ===================================================================
 --- lede.orig/target/linux/ar71xx/image/generic.mk
 +++ lede/target/linux/ar71xx/image/generic.mk
-@@ -46,7 +46,7 @@ TARGET_DEVICES += cf-e320n-v2
+@@ -44,7 +44,7 @@ TARGET_DEVICES += cf-e320n-v2
  
  define Device/cf-e380ac-v1
    DEVICE_TITLE := COMFAST CF-E380AC v1
@@ -10,8 +10,8 @@ Index: lede/target/linux/ar71xx/image/generic.mk
 +  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k-ct ath10k-firmware-qca988x-ct
    BOARDNAME = CF-E380AC-V1
    IMAGE_SIZE = 16128k
-   CONSOLE = ttyS0,115200
-@@ -428,7 +428,7 @@ TARGET_DEVICES += rnx-n360rt
+   MTDPARTS = spi0.0:128k(u-boot)ro,64k(art)ro,16128k(firmware),64k(art-backup)ro
+@@ -421,7 +421,7 @@ TARGET_DEVICES += rnx-n360rt
  define Device/mc-mac1200r
    $(Device/tplink-8mlzma)
    DEVICE_TITLE := Mercury MAC1200R
@@ -20,7 +20,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
    BOARDNAME := MC-MAC1200R
    DEVICE_PROFILE := MAC1200R
    TPLINK_HWID := 0x12000001
-@@ -527,7 +527,7 @@ TARGET_DEVICES += som9331
+@@ -517,7 +517,7 @@ TARGET_DEVICES += som9331
  
  define Device/sr3200
    DEVICE_TITLE := YunCore SR3200
@@ -28,8 +28,8 @@ Index: lede/target/linux/ar71xx/image/generic.mk
 +  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k-ct ath10k-firmware-qca988x-ct
    BOARDNAME = SR3200
    IMAGE_SIZE = 16000k
-   CONSOLE = ttyS0,115200
-@@ -538,7 +538,7 @@ TARGET_DEVICES += sr3200
+   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),16000k(firmware),64k(art)ro
+@@ -527,7 +527,7 @@ TARGET_DEVICES += sr3200
  define Device/xd3200
    $(Device/sr3200)
    DEVICE_TITLE := YunCore XD3200
@@ -38,7 +38,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
    BOARDNAME = XD3200
  endef
  TARGET_DEVICES += xd3200
-@@ -568,7 +568,7 @@ TARGET_DEVICES += oolite
+@@ -557,7 +557,7 @@ TARGET_DEVICES += oolite
  
  define Device/NBG6616
    DEVICE_TITLE := ZyXEL NBG6616
@@ -47,7 +47,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
    BOARDNAME = NBG6616
    KERNEL_SIZE = 2048k
    IMAGE_SIZE = 15323k
-@@ -674,7 +674,7 @@ endef
+@@ -662,7 +662,7 @@ endef
  define Device/dir-869-a1
  $(Device/seama)
    DEVICE_TITLE := D-Link DIR-869 rev. A1
@@ -56,7 +56,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
    BOARDNAME = DIR-869-A1
    IMAGE_SIZE = 15872k
    MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,64k(devdata)ro,64k(devconf)ro,15872k(firmware),64k(radiocfg)ro
-@@ -708,7 +708,7 @@ endef
+@@ -696,7 +696,7 @@ endef
  define Device/qihoo-c301
  $(Device/seama)
    DEVICE_TITLE := Qihoo C301
@@ -65,7 +65,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
    BOARDNAME = QIHOO-C301
    IMAGE_SIZE = 15744k
    MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),64k(devdata),64k(devconf),15744k(firmware),64k(warm_start),64k(action_image_config),64k(radiocfg)ro;spi0.1:15360k(upgrade2),1024k(privatedata)
-@@ -731,7 +731,7 @@ endef
+@@ -719,7 +719,7 @@ endef
  
  define Device/dap-2695-a1
    DEVICE_TITLE := D-Link DAP-2695 rev. A1
@@ -78,7 +78,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
 ===================================================================
 --- lede.orig/target/linux/ar71xx/image/legacy-devices.mk
 +++ lede/target/linux/ar71xx/image/legacy-devices.mk
-@@ -206,7 +206,7 @@ LEGACY_DEVICES += YUN_16M
+@@ -213,7 +213,7 @@ LEGACY_DEVICES += YUN_16M
  define LegacyDevice/F9K1115V2
    DEVICE_TITLE := Belkin AC1750DB (F9K1115V2)
    DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb3 kmod-usb-ledtrig-usbport \
@@ -87,7 +87,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += F9K1115V2
  
-@@ -288,13 +288,13 @@ LEGACY_DEVICES += DIR505A1
+@@ -300,13 +300,13 @@ LEGACY_DEVICES += DIR505A1
  
  define LegacyDevice/DGL5500A1
    DEVICE_TITLE := D-Link DGL-5500 rev. A1
@@ -103,7 +103,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += TEW823DRU
  
-@@ -363,7 +363,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
+@@ -375,7 +375,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
  
  define LegacyDevice/dLAN_pro_1200_ac
    DEVICE_TITLE := devolo dLAN pro 1200+ WiFi ac
@@ -112,7 +112,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += dLAN_pro_1200_ac
  
-@@ -375,13 +375,13 @@ LEGACY_DEVICES += ESR900
+@@ -387,13 +387,13 @@ LEGACY_DEVICES += ESR900
  
  define LegacyDevice/ESR1750
    DEVICE_TITLE := EnGenius ESR1750
@@ -128,24 +128,6 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += EPG5000
  
-@@ -482,7 +482,7 @@ LEGACY_DEVICES += OM5P
- 
- define LegacyDevice/OM5PAC
-   DEVICE_TITLE := OpenMesh OM5P-AC/OM5P-ACv2
--  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x om-watchdog
-+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct om-watchdog
- endef
- LEGACY_DEVICES += OM5PAC
- 
-@@ -500,7 +500,7 @@ LEGACY_DEVICES += MR900
- 
- define LegacyDevice/MR1750
-   DEVICE_TITLE := OpenMesh MR1750/MR1750v2
--  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
-+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
- endef
- LEGACY_DEVICES += MR1750
- 
 Index: lede/target/linux/ar71xx/image/nand.mk
 ===================================================================
 --- lede.orig/target/linux/ar71xx/image/nand.mk
@@ -158,8 +140,8 @@ Index: lede/target/linux/ar71xx/image/nand.mk
 +  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-usb-ledtrig-usbport kmod-ath10k-ct ath10k-firmware-qca988x-ct
    BOARDNAME = DW33D
    IMAGE_SIZE = 16000k
-   CONSOLE = ttyS0,115200
-@@ -89,6 +89,6 @@ LEGACY_DEVICES += WNDR4300V1
+   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware);ar934x-nfc:96m(rootfs_data),32m(backup)ro
+@@ -86,6 +86,6 @@ LEGACY_DEVICES += WNDR4300V1
  
  define LegacyDevice/NBG6716
    DEVICE_TITLE := Zyxel NBG 6716
