@@ -24,6 +24,7 @@ sqm-scripts
 dnsmasq
 iwinfo
 libiwinfo-lua
+rpcd-mod-iwinfo
 
 # GUI
 luci-mod-admin-full
