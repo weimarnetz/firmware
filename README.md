@@ -123,46 +123,57 @@ Networking is possible. [Some docs](https://vincent.bernat.im/en/blog/2011-uml-n
 
 1. Add `tap0` interface via NetworkManager 
 
-
-    $ nmcli connection add type tun ifname tap0 con-name mytap0 \
+```
+$ nmcli connection add type tun ifname tap0 con-name mytap0 \
                         mode tap owner `id -u` ip4 192.168.254.1/24
+```
 
 2. Start interface 
 
+```
+$ nmcli connection up mytap0
+```
 
-    $ nmcli connection up mytap0 
 
 3. Setup Forwarding and Masquerading 
 
+```
+# sysctl -w net.ipv4.ip_forward=1 
+# iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+```
 
-    # sysctl -w net.ipv4.ip_forward=1 
-    # iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 
 4. Install `uml_switch` 
 
+```
+# apt install uml-utils
+```
 
-    # apt install uml-utils 
 
 5. Start `uml_switch` and use `tap0` for outside connectifity
 
+```
+$ uml_switch -tap tap0
+```
 
-    $ uml_switch -tap tap0 
 
 6. Start UML Image 
 
+```
+$ ./weimarnetz-uml ubd0=img eth0=daemon 
+```
 
-    $ ./weimarnetz-uml ubd0=img eth0=daemon 
 
 7. Configure `/etc/config/network` WAN section: 
 
 
 ```
-    config interface 'wan' 
-        option ifname eth0 
-	    option proto static 
-	    option ipaddr 192.168.254.100
-	    option gateway 192.168.254.1
-	    option netmask 255.255.255.0
+config interface 'wan' 
+   option ifname eth0 
+   option proto static 
+   option ipaddr 192.168.254.100
+   option gateway 192.168.254.1
+   option netmask 255.255.255.0
 ```
 
 
