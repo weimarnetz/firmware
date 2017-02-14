@@ -119,6 +119,43 @@ Adding 17874944 bytes to physical memory to account for exec-shield gap
 
 Networking is possible. [Some docs](https://vincent.bernat.im/en/blog/2011-uml-network-lab.html#networking)
 
+### Networking with Ubuntu and NetworkManager 
+
+1. Add `tap0` interface via NetworkManager 
+
+    $ nmcli connection add type tun ifname tap0 con-name mytap0 \
+                        mode tap owner `id -u` ip4 192.168.254.1/24
+
+2. Start interface 
+
+    $ nmcli connection up mytap0 
+
+3. Setup Forwarding and Masquerading 
+
+    # sysctl -w net.ipv4.ip_forward=1 
+    # iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+4. Install `uml_switch` 
+
+    # apt install uml-utils 
+
+5. Start `uml_switch` and use `tap0` for outside connectifity
+
+    $ uml_switch -tap tap0 
+
+6. Start UML Image 
+
+    $ ./weimarnetz-uml ubd0=img eth0=daemon 
+
+7. Configure `/etc/config/network` WAN section: 
+
+    config interface 'wan' 
+         option ifname eth0 
+	 option proto static 
+	 option ipaddr 192.168.254.100
+	 option gateway 192.168.254.1
+	 option netmask 255.255.255.0
+
 
 
 ## Adding a package 
@@ -148,9 +185,20 @@ In order to add, modify or delete a patch run:
 
 Then switch to the LEDE directory:
 
-    $ cd lede
+    $ cd build/lede
 
 Now you can use the quilt commands as described in the [OpenWrt wiki](https://wiki.openwrt.org/doc/devel/patches).
+
+### Refresh Patches 
+
+See: https://wiki.debian.org/UsingQuilt
+
+```
+$ cd build/lede 
+$ quilt next # forward to patch 
+$ quilt push -f 
+$ quilt refresh # refresh patch 
+```
 
 ### Example: add a patch
 
