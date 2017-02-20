@@ -18,7 +18,7 @@ tc
 kmod-ipt-nat
 kmod-sched-cake
 kmod-ifb
-sqm-scripts
+#sqm-scripts
 
 # Common
 dnsmasq
@@ -27,10 +27,10 @@ libiwinfo-lua
 rpcd-mod-iwinfo
 
 # GUI
-luci-mod-admin-full
-luci-mod-freifunk
-luci-theme-bootstrap
-uhttpd
+#luci-mod-admin-full
+#luci-mod-freifunk
+#luci-theme-bootstrap
+#uhttpd
 
 # owm 
 iwinfo
@@ -51,4 +51,4 @@ vtun
 
 # kalua
 kalua-trunk
-luci-weimar-splash
+#luci-weimar-splash
