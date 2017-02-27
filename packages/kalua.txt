@@ -26,7 +26,6 @@ luci-mod-freifunk
 luci-app-olsr
 luci-app-olsr-services
 luci-app-owm
-luci-app-owm-ant
 luci-app-owm-cmd
 luci-theme-bootstrap
 # GUI addon
