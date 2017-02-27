@@ -17,20 +17,22 @@ hostapd-mini
 tc
 kmod-ipt-nat
 kmod-sched-cake
-kmod-ifb
+#kmod-ifb
 #sqm-scripts
 
 # Common
 dnsmasq
-iwinfo
+#iwinfo
 libiwinfo-lua
 rpcd-mod-iwinfo
 
 # GUI
-#luci-mod-admin-full
-#luci-mod-freifunk
-#luci-theme-bootstrap
-#uhttpd
+luci-mod-admin-full
+luci-mod-freifunk
+luci-theme-bootstrap
+luci-app-olsr
+luci-app-olsr-services
+uhttpd
 
 # owm 
 iwinfo
@@ -51,4 +53,4 @@ vtun
 
 # kalua
 kalua-trunk
-#luci-weimar-splash
+luci-app-weimarnetz

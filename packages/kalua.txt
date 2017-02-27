@@ -48,7 +48,7 @@ vtun
 
 # Weimarnetz
 kalua-trunk
-luci-weimar-splash
+luci-app-weimarnetz
 kmod-sched-cake
 kmod-ifb
 sqm-scripts
