@@ -15,7 +15,7 @@ iperf
 ethtool
 #horst
 dnsmasq
-iwinfo
+#iwinfo
 libiwinfo-lua
 rpcd-mod-iwinfo
 
@@ -48,7 +48,7 @@ vtun
 
 # Weimarnetz
 kalua-trunk
-luci-app-weimarnetz
+#luci-app-weimarnetz
 kmod-sched-cake
 kmod-ifb
 sqm-scripts
