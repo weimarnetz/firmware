@@ -1,4 +1,5 @@
 001-ath10k-ct-driver+firmware.patch
+002-swconfig-poll.patch
 801-fragment-cache-size.patch
 201-luci-remove-freifunk-firewall.patch
 003-add-respawn.patch
