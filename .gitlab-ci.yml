@@ -12,6 +12,9 @@ build:
     stage: build
     script:
      - chown -R nobody .
+     - mkdir -p /cache/dl || echo "already there" 
+     - chown -R nobody:nobody /cache/dl
+     - ln -s /cache/dl dl
      - sudo -u nobody make TARGET=ar71xx -j$(nproc) 
 #     - sudo -u nobody make TARGET=ramips_mt7260 -j$(nproc)
 #     - sudo -u nobody make TARGET=ramips_mt7628 -j$(nproc)
