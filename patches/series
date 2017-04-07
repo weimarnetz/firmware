@@ -1,4 +1,4 @@
-001-ministrel-blues.patch
+000-ministrel-blues.patch
 0007-mac80211-ath10k-allow-simultaneous-AP-IBSS.patch
 001-ath10k-ct-driver+firmware.patch
 801-fragment-cache-size.patch
