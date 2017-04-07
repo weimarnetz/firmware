@@ -1,0 +1,276 @@
+Index: lede/target/linux/ar71xx/image/generic.mk
+===================================================================
+--- lede.orig/target/linux/ar71xx/image/generic.mk
++++ lede/target/linux/ar71xx/image/generic.mk
+@@ -53,7 +53,7 @@ TARGET_DEVICES += cf-e320n-v2
+ 
+ define Device/cf-e380ac-v1
+   DEVICE_TITLE := COMFAST CF-E380AC v1
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = CF-E380AC-V1
+   IMAGE_SIZE = 16128k
+   MTDPARTS = spi0.0:128k(u-boot)ro,64k(art)ro,16128k(firmware),64k(art-backup)ro
+@@ -456,7 +456,7 @@ TARGET_DEVICES += rnx-n360rt
+ define Device/mc-mac1200r
+   $(Device/tplink-8mlzma)
+   DEVICE_TITLE := Mercury MAC1200R
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := MC-MAC1200R
+   DEVICE_PROFILE := MAC1200R
+   TPLINK_HWID := 0x12000001
+@@ -552,7 +552,7 @@ TARGET_DEVICES += som9331
+ 
+ define Device/sr3200
+   DEVICE_TITLE := YunCore SR3200
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = SR3200
+   IMAGE_SIZE = 16000k
+   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),16000k(firmware),64k(art)ro
+@@ -562,7 +562,7 @@ TARGET_DEVICES += sr3200
+ define Device/xd3200
+   $(Device/sr3200)
+   DEVICE_TITLE := YunCore XD3200
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = XD3200
+ endef
+ TARGET_DEVICES += xd3200
+@@ -592,7 +592,7 @@ TARGET_DEVICES += oolite
+ 
+ define Device/NBG6616
+   DEVICE_TITLE := ZyXEL NBG6616
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-usb-storage kmod-rtc-pcf8563 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-usb-storage kmod-rtc-pcf8563 kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = NBG6616
+   KERNEL_SIZE = 2048k
+   IMAGE_SIZE = 15323k
+@@ -697,7 +697,7 @@ endef
+ define Device/dir-869-a1
+   $(Device/seama)
+   DEVICE_TITLE := D-Link DIR-869 rev. A1
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = DIR-869-A1
+   IMAGE_SIZE = 15872k
+   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,64k(devdata)ro,64k(devconf)ro,15872k(firmware),64k(radiocfg)ro
+@@ -731,7 +731,7 @@ endef
+ define Device/qihoo-c301
+   $(Device/seama)
+   DEVICE_TITLE := Qihoo C301
+-  DEVICE_PACKAGES :=  kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES :=  kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = QIHOO-C301
+   IMAGE_SIZE = 15744k
+   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),64k(devdata),64k(devconf),15744k(firmware),64k(warm_start),64k(action_image_config),64k(radiocfg)ro;spi0.1:15360k(upgrade2),1024k(privatedata)
+@@ -754,7 +754,7 @@ endef
+ 
+ define Device/dap-2695-a1
+   DEVICE_TITLE := D-Link DAP-2695 rev. A1
+-  DEVICE_PACKAGES := ath10k-firmware-qca988x kmod-ath10k uboot-envtools
++  DEVICE_PACKAGES := ath10k-firmware-qca988x-ct kmod-ath10k uboot-envtools
+   BOARDNAME = DAP-2695-A1
+   IMAGES := factory.img sysupgrade.bin
+   IMAGE_SIZE = 15360k
+Index: lede/target/linux/ar71xx/image/legacy-devices.mk
+===================================================================
+--- lede.orig/target/linux/ar71xx/image/legacy-devices.mk
++++ lede/target/linux/ar71xx/image/legacy-devices.mk
+@@ -193,7 +193,7 @@ LEGACY_DEVICES += YUN_16M
+ define LegacyDevice/F9K1115V2
+   DEVICE_TITLE := Belkin AC1750DB (F9K1115V2)
+   DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb3 kmod-usb-ledtrig-usbport \
+-	kmod-ath10k ath10k-firmware-qca988x
++	kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += F9K1115V2
+ 
+@@ -280,13 +280,13 @@ LEGACY_DEVICES += DIR505A1
+ 
+ define LegacyDevice/DGL5500A1
+   DEVICE_TITLE := D-Link DGL-5500 rev. A1
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += DGL5500A1
+ 
+ define LegacyDevice/TEW823DRU
+   DEVICE_TITLE := TRENDNet TEW-823DRU
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += TEW823DRU
+ 
+@@ -355,7 +355,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
+ 
+ define LegacyDevice/dLAN_pro_1200_ac
+   DEVICE_TITLE := devolo dLAN pro 1200+ WiFi ac
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += dLAN_pro_1200_ac
+ 
+@@ -367,13 +367,13 @@ LEGACY_DEVICES += ESR900
+ 
+ define LegacyDevice/ESR1750
+   DEVICE_TITLE := EnGenius ESR1750
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += ESR1750
+ 
+ define LegacyDevice/EPG5000
+   DEVICE_TITLE := EnGenius EPG5000
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += EPG5000
+ 
+Index: lede/target/linux/ar71xx/image/nand.mk
+===================================================================
+--- lede.orig/target/linux/ar71xx/image/nand.mk
++++ lede/target/linux/ar71xx/image/nand.mk
+@@ -15,7 +15,7 @@ TARGET_DEVICES += c-60
+ 
+ define Device/domywifi-dw33d
+   DEVICE_TITLE := DomyWifi DW33D
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-storage kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME = DW33D
+   IMAGE_SIZE = 16000k
+   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14528k(rootfs),1472k(kernel),64k(art)ro,16000k@0x50000(firmware);ar934x-nfc:96m(rootfs_data),32m(backup)ro
+@@ -68,7 +68,7 @@ TARGET_DEVICES += z1
+ 
+ define LegacyDevice/R6100
+   DEVICE_TITLE := NETGEAR R6100
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-ledtrig-usbport
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct kmod-usb-core kmod-usb-ohci kmod-usb2 kmod-usb-ledtrig-usbport
+ endef
+ LEGACY_DEVICES += R6100
+ 
+@@ -86,6 +86,6 @@ LEGACY_DEVICES += WNDR4300V1
+ 
+ define LegacyDevice/NBG6716
+   DEVICE_TITLE := Zyxel NBG 6716
+-  DEVICE_PACKAGES := kmod-rtc-pcf8563 kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-rtc-pcf8563 kmod-ath10k ath10k-firmware-qca988x-ct
+ endef
+ LEGACY_DEVICES += NBG6716
+Index: lede/target/linux/ar71xx/image/tp-link.mk
+===================================================================
+--- lede.orig/target/linux/ar71xx/image/tp-link.mk
++++ lede/target/linux/ar71xx/image/tp-link.mk
+@@ -106,7 +106,7 @@ endef
+ 
+ define Device/archer-c59-v1
+   DEVICE_TITLE := TP-LINK Archer C59 v1
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C59-V1
+   TPLINK_BOARD_NAME := ARCHER-C59-V1
+   DEVICE_PROFILE := ARCHERC59V1
+@@ -121,7 +121,7 @@ TARGET_DEVICES += archer-c59-v1
+ 
+ define Device/archer-c60-v1
+   DEVICE_TITLE := TP-LINK Archer C60 v1
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C60-V1
+   TPLINK_BOARD_NAME := ARCHER-C60-V1
+   DEVICE_PROFILE := ARCHERC60V1
+@@ -176,7 +176,7 @@ TARGET_DEVICES += cpe210-220-v1 cpe510-5
+ 
+ define Device/re450-v1
+   DEVICE_TITLE := TP-LINK RE450 v1
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+   MTDPARTS := spi0.0:128k(u-boot)ro,1344k(kernel),4672k(rootfs),64k(pation-table)ro,64k(product-info)ro,1856k(config)ro,64k(art)ro,6016k@0x20000(firmware)
+   IMAGE_SIZE := 7936k
+   BOARDNAME := RE450
+@@ -262,7 +262,7 @@ TARGET_DEVICES += tl-wdr3500-v1 tl-wdr36
+ define Device/tl-wdr6500-v2
+   $(Device/tplink-8mlzma)
+   DEVICE_TITLE := TP-LINK TL-WDR6500 v2
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   KERNEL := kernel-bin | patch-cmdline | lzma | uImage lzma
+   KERNEL_INITRAMFS := kernel-bin | patch-cmdline | lzma | uImage lzma | mktplinkfw-combined
+   BOARDNAME = TL-WDR6500-v2
+@@ -286,7 +286,7 @@ TARGET_DEVICES += tl-wdr3320-v2
+ define Device/archer-c5-v1
+   $(Device/tplink-16mlzma)
+   DEVICE_TITLE := TP-LINK Archer C5 v1
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C5
+   DEVICE_PROFILE := ARCHERC7
+   TPLINK_HWID := 0xc5000001
+@@ -295,7 +295,7 @@ endef
+ define Device/archer-c7-v1
+   $(Device/tplink-8mlzma)
+   DEVICE_TITLE := TP-LINK Archer C7 v1
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C7
+   DEVICE_PROFILE := ARCHERC7
+   TPLINK_HWID := 0x75000001
+@@ -304,7 +304,7 @@ endef
+ define Device/archer-c7-v2
+   $(Device/tplink-16mlzma)
+   DEVICE_TITLE := TP-LINK Archer C7 v2
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C7-V2
+   DEVICE_PROFILE := ARCHERC7
+   TPLINK_HWID := 0xc7000002
+@@ -316,7 +316,7 @@ endef
+ define Device/archer-c7-v2-il
+   $(Device/tplink-16mlzma)
+   DEVICE_TITLE := TP-LINK Archer C7 v2 (IL)
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C7-V2
+   DEVICE_PROFILE := ARCHERC7
+   TPLINK_HWID := 0xc7000002
+@@ -326,7 +326,7 @@ endef
+ define Device/tl-wdr7500-v3
+   $(Device/tplink-8mlzma)
+   DEVICE_TITLE := TP-LINK Archer C7 v3
+-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := ARCHER-C7
+   DEVICE_PROFILE := ARCHERC7
+   TPLINK_HWID := 0x75000003
+@@ -455,7 +455,7 @@ TARGET_DEVICES += tl-mr3020-v1 tl-mr3040
+ define Device/tl-wpa8630-v1
+   $(Device/tplink-8mlzma)
+   DEVICE_TITLE := TP-LINK TL-WPA8630 v1
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
+   BOARDNAME := TL-WPA8630
+   DEVICE_PROFILE := TL-WPA8630
+   TPLINK_HWID := 0x86300001
+Index: lede/target/linux/ar71xx/image/ubnt.mk
+===================================================================
+--- lede.orig/target/linux/ar71xx/image/ubnt.mk
++++ lede/target/linux/ar71xx/image/ubnt.mk
+@@ -128,7 +128,7 @@ endef
+ define Device/ubnt-unifiac-lite
+   $(Device/ubnt-unifiac)
+   DEVICE_TITLE := Ubiquiti UniFi AC-Lite
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
++  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
+   DEVICE_PROFILE := UBNT UBNTUNIFIACLITE
+   BOARDNAME := UBNT-UF-AC-LITE
+ endef
+@@ -136,7 +136,7 @@ endef
+ define Device/ubnt-unifiac-pro
+   $(Device/ubnt-unifiac)
+   DEVICE_TITLE := Ubiquiti UniFi AC-Pro
+-  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x kmod-usb-core kmod-usb-ohci kmod-usb2
++  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct kmod-usb-core kmod-usb-ohci kmod-usb2
+   DEVICE_PROFILE := UBNT UBNTUNIFIACPRO
+   BOARDNAME := UBNT-UF-AC-PRO
+ endef
