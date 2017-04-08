@@ -261,7 +261,7 @@ Index: lede/target/linux/ar71xx/image/ubnt.mk
    $(Device/ubnt-unifiac)
    DEVICE_TITLE := Ubiquiti UniFi AC-Lite
 -  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
-+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
    DEVICE_PROFILE := UBNT UBNTUNIFIACLITE
    BOARDNAME := UBNT-UF-AC-LITE
  endef
@@ -270,7 +270,7 @@ Index: lede/target/linux/ar71xx/image/ubnt.mk
    $(Device/ubnt-unifiac)
    DEVICE_TITLE := Ubiquiti UniFi AC-Pro
 -  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x kmod-usb-core kmod-usb-ohci kmod-usb2
-+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct kmod-usb-core kmod-usb-ohci kmod-usb2
++  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct kmod-usb-core kmod-usb-ohci kmod-usb2
    DEVICE_PROFILE := UBNT UBNTUNIFIACPRO
    BOARDNAME := UBNT-UF-AC-PRO
  endef
