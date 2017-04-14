@@ -2,5 +2,6 @@
 .stamp*
 patches/*~
 bin
-openwrt
 firmwares
+dl
+build

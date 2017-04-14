@@ -1,0 +1,3032 @@
+Index: lede/package/kernel/mac80211/patches/9909-mac80211_minstrel_relax_variance_overestimation_fluctuation.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9909-mac80211_minstrel_relax_variance_overestimation_fluctuation.patch
+@@ -0,0 +1,59 @@
++mac80211: minstrel: fix variance overestimation / fluctuation
++
++The variance / standard deviation is artificially inflated for rates
++where only sample attempts are counted. With only few packet attempts,
++the difference between the current probabilty and the ewma value tends
++to be very big because of the lack of precision in the current value.
++
++Whenever not enough data was gathered, pass in the previous average
++instead of the current probability. This leads to the standard deviation
++value slowly decreasing for sampled rates.
++
++Signed-off-by: Felix Fietkau <nbd@openwrt.org>
++---
++ net/mac80211/rc80211_minstrel.c | 11 ++++++++---
++ net/mac80211/rc80211_minstrel.h |  2 ++
++ 2 files changed, 10 insertions(+), 3 deletions(-)
++
++--- a/net/mac80211/rc80211_minstrel.c
+++++ b/net/mac80211/rc80211_minstrel.c
++@@ -159,7 +159,7 @@ minstrel_update_rates(struct minstrel_pr
++ void
++ minstrel_calc_rate_stats(struct minstrel_rate_stats *mrs)
++ {
++-	unsigned int cur_prob;
+++	unsigned int cur_prob, ewmv_prob;
++ 
++ 	if (unlikely(mrs->attempts > 0)) {
++ 		mrs->sample_skipped = 0;
++@@ -167,11 +167,16 @@ minstrel_calc_rate_stats(struct minstrel
++ 		if (unlikely(!mrs->att_hist)) {
++ 			mrs->prob_ewma = cur_prob;
++ 		} else {
+++			ewmv_prob = cur_prob;
+++
+++			if (mrs->attempts < 12)
+++				ewmv_prob = mrs->prob_ewma;
+++
++ 			/* update exponential weighted moving variance */
++ 			mrs->prob_ewmv = minstrel_ewmv(mrs->prob_ewmv,
++-							cur_prob,
+++							ewmv_prob,
++ 							mrs->prob_ewma,
++-							EWMA_LEVEL);
+++							EWMV_LEVEL);
++ 
++ 			/*update exponential weighted moving avarage */
++ 			mrs->prob_ewma = minstrel_ewma(mrs->prob_ewma,
++--- a/net/mac80211/rc80211_minstrel.h
+++++ b/net/mac80211/rc80211_minstrel.h
++@@ -10,7 +10,9 @@
++ #define __RC_MINSTREL_H
++ 
++ #define EWMA_LEVEL	96	/* ewma weighting factor [/EWMA_DIV] */
+++#define EWMV_LEVEL	121
++ #define EWMA_DIV	128
+++
++ #define SAMPLE_COLUMNS	10	/* number of columns in sample table */
++ 
++ /* scaled fraction values */
+Index: lede/package/kernel/mac80211/patches/9921-mac80211_minstrel-HT_new_rate_downgrade_approach.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9921-mac80211_minstrel-HT_new_rate_downgrade_approach.patch
+@@ -0,0 +1,345 @@
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -21,6 +21,9 @@
++ #define AVG_AMPDU_SIZE	16
++ #define AVG_PKT_SIZE	1200
++ 
+++/* Spatial stream error threshold in [%] */
+++#define STREAM_ERROR_THRES 50
+++
++ /* Number of bits for an average sized packet */
++ #define MCS_NBITS ((AVG_PKT_SIZE * AVG_AMPDU_SIZE) << 3)
++ 
++@@ -366,7 +369,7 @@ minstrel_ht_sort_best_tp_rates(struct mi
++ }
++ 
++ /*
++- * Find and set the topmost probability rate per sta and per group
+++ * Find and set the topmost probability rate per sta
++  */
++ static void
++ minstrel_ht_set_best_prob_rate(struct minstrel_ht_sta *mi, u16 index)
++@@ -375,8 +378,6 @@ minstrel_ht_set_best_prob_rate(struct mi
++ 	struct minstrel_rate_stats *mrs;
++ 	int tmp_group, tmp_idx, tmp_tp_avg, tmp_prob;
++ 	int max_tp_group, cur_tp_avg, cur_group, cur_idx;
++-	int max_gpr_group, max_gpr_idx;
++-	int max_gpr_tp_avg, max_gpr_prob;
++ 
++ 	cur_group = index / MCS_GROUP_RATES;
++ 	cur_idx = index % MCS_GROUP_RATES;
++@@ -395,30 +396,17 @@ minstrel_ht_set_best_prob_rate(struct mi
++ 	    (max_tp_group != MINSTREL_CCK_GROUP))
++ 		return;
++ 
++-	max_gpr_group = mg->max_group_prob_rate / MCS_GROUP_RATES;
++-	max_gpr_idx = mg->max_group_prob_rate % MCS_GROUP_RATES;
++-	max_gpr_prob = mi->groups[max_gpr_group].rates[max_gpr_idx].prob_ewma;
++-
++ 	if (mrs->prob_ewma > MINSTREL_FRAC(75, 100)) {
++ 		cur_tp_avg = minstrel_ht_get_tp_avg(mi, cur_group, cur_idx,
++ 						    mrs->prob_ewma);
++ 		if (cur_tp_avg > tmp_tp_avg)
++ 			mi->max_prob_rate = index;
++-
++-		max_gpr_tp_avg = minstrel_ht_get_tp_avg(mi, max_gpr_group,
++-							max_gpr_idx,
++-							max_gpr_prob);
++-		if (cur_tp_avg > max_gpr_tp_avg)
++-			mg->max_group_prob_rate = index;
++ 	} else {
++ 		if (mrs->prob_ewma > tmp_prob)
++ 			mi->max_prob_rate = index;
++-		if (mrs->prob_ewma > max_gpr_prob)
++-			mg->max_group_prob_rate = index;
++ 	}
++ }
++ 
++-
++ /*
++  * Assign new rate set per sta and use CCK rates only if the fastest
++  * rate (max_tp_rate[0]) is from CCK group. This prohibits such sorted
++@@ -453,37 +441,6 @@ minstrel_ht_assign_best_tp_rates(struct
++ }
++ 
++ /*
++- * Try to increase robustness of max_prob rate by decrease number of
++- * streams if possible.
++- */
++-static inline void
++-minstrel_ht_prob_rate_reduce_streams(struct minstrel_ht_sta *mi)
++-{
++-	struct minstrel_mcs_group_data *mg;
++-	int tmp_max_streams, group, tmp_idx, tmp_prob;
++-	int tmp_tp = 0;
++-
++-	tmp_max_streams = minstrel_mcs_groups[mi->max_tp_rate[0] /
++-			  MCS_GROUP_RATES].streams;
++-	for (group = 0; group < ARRAY_SIZE(minstrel_mcs_groups); group++) {
++-		mg = &mi->groups[group];
++-		if (!mi->supported[group] || group == MINSTREL_CCK_GROUP)
++-			continue;
++-
++-		tmp_idx = mg->max_group_prob_rate % MCS_GROUP_RATES;
++-		tmp_prob = mi->groups[group].rates[tmp_idx].prob_ewma;
++-
++-		if (tmp_tp < minstrel_ht_get_tp_avg(mi, group, tmp_idx, tmp_prob) &&
++-		   (minstrel_mcs_groups[group].streams < tmp_max_streams)) {
++-				mi->max_prob_rate = mg->max_group_prob_rate;
++-				tmp_tp = minstrel_ht_get_tp_avg(mi, group,
++-								tmp_idx,
++-								tmp_prob);
++-		}
++-	}
++-}
++-
++-/*
++  * Update rate statistics and select new primary rates
++  *
++  * Rules for rate selection:
++@@ -497,9 +454,8 @@ minstrel_ht_update_stats(struct minstrel
++ {
++ 	struct minstrel_mcs_group_data *mg;
++ 	struct minstrel_rate_stats *mrs;
++-	int group, i, j, cur_prob;
++-	u16 tmp_mcs_tp_rate[MAX_THR_RATES], tmp_group_tp_rate[MAX_THR_RATES];
++-	u16 tmp_cck_tp_rate[MAX_THR_RATES], index;
+++	int index, group, i, j, cur_prob;
+++	u16 tmp_mcs_tp_rate[MAX_THR_RATES], tmp_cck_tp_rate[MAX_THR_RATES];
++ 
++ 	if (mi->ampdu_packets > 0) {
++ 		mi->avg_ampdu_len = minstrel_ewma(mi->avg_ampdu_len,
++@@ -526,10 +482,6 @@ minstrel_ht_update_stats(struct minstrel
++ 
++ 		mi->sample_count++;
++ 
++-		/* (re)Initialize group rate indexes */
++-		for(j = 0; j < MAX_THR_RATES; j++)
++-			tmp_group_tp_rate[j] = group;
++-
++ 		for (i = 0; i < MCS_GROUP_RATES; i++) {
++ 			if (!(mi->supported[group] & BIT(i)))
++ 				continue;
++@@ -553,25 +505,15 @@ minstrel_ht_update_stats(struct minstrel
++ 							       tmp_cck_tp_rate);
++ 			}
++ 
++-			/* Find max throughput rate set within a group */
++-			minstrel_ht_sort_best_tp_rates(mi, index,
++-						       tmp_group_tp_rate);
++-
++ 			/* Find max probability rate per group and global */
++ 			minstrel_ht_set_best_prob_rate(mi, index);
++ 		}
++-
++-		memcpy(mg->max_group_tp_rate, tmp_group_tp_rate,
++-		       sizeof(mg->max_group_tp_rate));
++ 	}
++ 
++ 	/* Assign new rate set per sta */
++ 	minstrel_ht_assign_best_tp_rates(mi, tmp_mcs_tp_rate, tmp_cck_tp_rate);
++ 	memcpy(mi->max_tp_rate, tmp_mcs_tp_rate, sizeof(mi->max_tp_rate));
++ 
++-	/* Try to increase robustness of max_prob_rate*/
++-	minstrel_ht_prob_rate_reduce_streams(mi);
++-
++ 	/* try to sample all available rates during each interval */
++ 	mi->sample_count *= 8;
++ 
++@@ -629,27 +571,112 @@ minstrel_set_next_sample_idx(struct mins
++ 	}
++ }
++ 
+++static inline bool
+++minstrel_LGI_is_in_use(int cur_flags, int tmp_flags, int cur_streams,
+++		       int tmp_streams)
+++{
+++
+++	if ((cur_flags & IEEE80211_TX_RC_SHORT_GI) &&
+++	     !(tmp_flags & IEEE80211_TX_RC_SHORT_GI) &&
+++	    (((cur_flags & IEEE80211_TX_RC_40_MHZ_WIDTH) ==
+++	      (tmp_flags & IEEE80211_TX_RC_40_MHZ_WIDTH)) ||
+++	     ((cur_flags & IEEE80211_TX_RC_80_MHZ_WIDTH) ==
+++	      (tmp_flags & IEEE80211_TX_RC_80_MHZ_WIDTH)) ||
+++	     ((!(cur_flags & IEEE80211_TX_RC_40_MHZ_WIDTH) ==
+++	      !(tmp_flags & IEEE80211_TX_RC_40_MHZ_WIDTH)) &&
+++	      (!(cur_flags & IEEE80211_TX_RC_80_MHZ_WIDTH) ==
+++	      !(tmp_flags & IEEE80211_TX_RC_80_MHZ_WIDTH)))) &&
+++	    (cur_streams == tmp_streams))
+++		return true;
+++	else
+++		return false;
+++}
+++
+++/*
+++ * Downgrading a rate is done based on the mrr capabilities. If possible we
+++ * first switche from SGI to LGI, second lower HT40 to HT20 and last reduce
+++ * the number of streams.
+++ */
++ static void
++-minstrel_downgrade_rate(struct minstrel_ht_sta *mi, u16 *idx, bool primary)
+++minstrel_ht_downgrade_rate(struct minstrel_priv *mp, struct minstrel_ht_sta *mi)
++ {
++-	int group, orig_group;
+++	int cur_group, cur_idx, cur_flags, cur_streams;
+++	int tmp_group, tmp_flags, tmp_streams;
++ 
++-	orig_group = group = *idx / MCS_GROUP_RATES;
++-	while (group > 0) {
++-		group--;
+++#ifdef CPTCFG_MAC80211_DEBUGFS
+++	if (mp->fixed_rate_idx != -1)
+++		return;
+++#endif
++ 
++-		if (!mi->supported[group])
++-			continue;
+++	/* if we have mrr support,  just downgrade max_prob_rate,
+++	 * otherwise downgrade first mrr stage max_tp_rate[0] */
+++	if (mp->has_mrr) {
+++		tmp_group = cur_group = mi->max_prob_rate / MCS_GROUP_RATES;
+++		cur_idx = mi->max_prob_rate % MCS_GROUP_RATES;
+++	} else {
+++		tmp_group = cur_group = mi->max_tp_rate[0] / MCS_GROUP_RATES;
+++		cur_idx = mi->max_tp_rate[0] % MCS_GROUP_RATES;
+++	}
+++
+++	cur_flags = minstrel_mcs_groups[cur_group].flags;
+++	cur_streams = minstrel_mcs_groups[cur_group].streams;
+++
+++	/* Ignore CCK group and lowest single stream rate */
+++	if ((cur_group == MINSTREL_CCK_GROUP) ||
+++	    (cur_idx == 0 && cur_streams == 1))
+++		return;
++ 
++-		if (minstrel_mcs_groups[group].streams >
++-		    minstrel_mcs_groups[orig_group].streams)
+++	while (tmp_group > 0) {
+++		tmp_group--;
+++		tmp_flags = minstrel_mcs_groups[tmp_group].flags;
+++		tmp_streams = minstrel_mcs_groups[tmp_group].streams;
+++
+++		if (!mi->supported[tmp_group])
++ 			continue;
++ 
++-		if (primary)
++-			*idx = mi->groups[group].max_group_tp_rate[0];
++-		else
++-			*idx = mi->groups[group].max_group_tp_rate[1];
++-		break;
+++		/* first try to switch from SGI to LGI */
+++		if (minstrel_LGI_is_in_use(cur_flags, tmp_flags, cur_streams,
+++		    tmp_streams)) {
+++			if (mp->has_mrr) {
+++				mi->max_prob_rate = tmp_group *
+++					MCS_GROUP_RATES + cur_idx;
+++			} else {
+++				mi->max_tp_rate[0] = tmp_group *
+++					MCS_GROUP_RATES + cur_idx;
+++			}
+++			break;
+++		}
+++
+++		/* second try to decrease number of spacial streams used */
+++		if ((cur_streams > 1) &&
+++		    !(tmp_flags & IEEE80211_TX_RC_80_MHZ_WIDTH) &&
+++		    !(tmp_flags & IEEE80211_TX_RC_40_MHZ_WIDTH) &&
+++		    !(tmp_flags & IEEE80211_TX_RC_SHORT_GI)) {
+++			if (mp->has_mrr) {
+++				mi->max_prob_rate = tmp_group *
+++					MCS_GROUP_RATES + cur_idx;
+++			} else {
+++				mi->max_tp_rate[0] = tmp_group *
+++					MCS_GROUP_RATES + cur_idx;
+++			}
+++			break;
+++		}
+++		/* third try to reduce channel bw from HT80 to HT40 to HT20 */
+++		if ((((cur_flags & IEEE80211_TX_RC_80_MHZ_WIDTH) && (tmp_flags &
+++			IEEE80211_TX_RC_40_MHZ_WIDTH)) ||
+++			((cur_flags & IEEE80211_TX_RC_40_MHZ_WIDTH) &&
+++			!(tmp_flags & IEEE80211_TX_RC_80_MHZ_WIDTH) &&
+++			!(tmp_flags & IEEE80211_TX_RC_40_MHZ_WIDTH))) &&
+++			(cur_streams == tmp_streams)) {
+++			if (mp->has_mrr) {
+++				mi->max_prob_rate = tmp_group *
+++					MCS_GROUP_RATES + cur_idx;
+++			} else {
+++				mi->max_tp_rate[0] = tmp_group *
+++					MCS_GROUP_RATES + cur_idx;
+++			}
+++			break;
+++		}
++ 	}
++ }
++ 
++@@ -684,7 +711,7 @@ minstrel_ht_tx_status(void *priv, struct
++ 	struct minstrel_ht_sta_priv *msp = priv_sta;
++ 	struct minstrel_ht_sta *mi = &msp->ht;
++ 	struct ieee80211_tx_rate *ar = info->status.rates;
++-	struct minstrel_rate_stats *rate, *rate2;
+++	struct minstrel_rate_stats *rate;
++ 	struct minstrel_priv *mp = priv;
++ 	bool last, update = false;
++ 	int i;
++@@ -730,23 +757,23 @@ minstrel_ht_tx_status(void *priv, struct
++ 	}
++ 
++ 	/*
++-	 * check for sudden death of spatial multiplexing,
++-	 * downgrade to a lower number of streams if necessary.
+++	 * Check for sudden death of spatial multiplexing by counting
+++	 * spatial stream errors. If the ratio of block ack length
+++	 * to AMPDU length is smaller than STREAM_ERROR_THRES in % a stream
+++	 * error occurred. If the number of consecutive stream errors is
+++	 * greater than 3 downgrade current rate to increase robustness.
++ 	 */
++-	rate = minstrel_get_ratestats(mi, mi->max_tp_rate[0]);
++-	if (rate->attempts > 30 &&
++-	    MINSTREL_FRAC(rate->success, rate->attempts) <
++-	    MINSTREL_FRAC(20, 100)) {
++-		minstrel_downgrade_rate(mi, &mi->max_tp_rate[0], true);
++-		update = true;
++-	}
++-
++-	rate2 = minstrel_get_ratestats(mi, mi->max_tp_rate[1]);
++-	if (rate2->attempts > 30 &&
++-	    MINSTREL_FRAC(rate2->success, rate2->attempts) <
++-	    MINSTREL_FRAC(20, 100)) {
++-		minstrel_downgrade_rate(mi, &mi->max_tp_rate[1], false);
++-		update = true;
+++	if ((info->status.ampdu_len > 1) &&
+++	    (MINSTREL_FRAC(info->status.ampdu_ack_len, info->status.ampdu_len) <
+++	    MINSTREL_FRAC(STREAM_ERROR_THRES, 100))) {
+++		mi->stream_errors++;
+++		if (mi->stream_errors > 3) {
+++			minstrel_ht_downgrade_rate(mp, mi);
+++			update = true;
+++			mi->stream_errors = 0;
+++		}
+++	} else {
+++		mi->stream_errors = 0;
++ 	}
++ 
++ 	if (time_after(jiffies, mi->last_stats_update +
++--- a/net/mac80211/rc80211_minstrel_ht.h
+++++ b/net/mac80211/rc80211_minstrel_ht.h
++@@ -52,10 +52,6 @@ struct minstrel_mcs_group_data {
++ 	u8 index;
++ 	u8 column;
++ 
++-	/* sorted rate set within a MCS group*/
++-	u16 max_group_tp_rate[MAX_THR_RATES];
++-	u16 max_group_prob_rate;
++-
++ 	/* MCS rate statistics */
++ 	struct minstrel_rate_stats rates[MCS_GROUP_RATES];
++ };
++@@ -86,6 +82,7 @@ struct minstrel_ht_sta {
++ 
++ 	/* tx flags to add for frames for this sta */
++ 	u32 tx_flags;
+++	u8 stream_errors;
++ 
++ 	u8 sample_wait;
++ 	u8 sample_tries;
+Index: lede/package/kernel/mac80211/patches/9922-mac80211_minstrel_avoid_overflowing_total-packet-counters.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9922-mac80211_minstrel_avoid_overflowing_total-packet-counters.patch
+@@ -0,0 +1,15 @@
++--- a/net/mac80211/rc80211_minstrel.c
+++++ b/net/mac80211/rc80211_minstrel.c
++@@ -367,6 +367,12 @@ minstrel_get_rate(void *priv, struct iee
++ 	/* increase sum packet counter */
++ 	mi->total_packets++;
++ 
+++	/* avoid overflowing packet counters */
+++	if (mi->total_packets == ~0) {
+++		mi->sample_packets = 0;
+++		mi->total_packets = 0;
+++	}
+++
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	if (mp->fixed_rate_idx != -1)
++ 		return;
+Index: lede/package/kernel/mac80211/patches/9923-mac80211_minstrel_new_time_based_sampling_approach.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9923-mac80211_minstrel_new_time_based_sampling_approach.patch
+@@ -0,0 +1,308 @@
++--- a/net/mac80211/rc80211_minstrel.h
+++++ b/net/mac80211/rc80211_minstrel.h
++@@ -23,6 +23,12 @@
++ /* number of highest throughput rates to consider*/
++ #define MAX_THR_RATES 4
++ 
+++/* rate sampling interval in milliseconds */
+++#define RATE_SAMPLING_INT 20
+++
+++/* minimum number of packets between two successive sample attempts */
+++#define MIN_INTERSAMPLE_SPACING 1
+++
++ /*
++  * Perform EWMA (Exponentially Weighted Moving Average) calculation
++  */
++@@ -91,6 +97,7 @@ struct minstrel_sta_info {
++ 	struct ieee80211_sta *sta;
++ 
++ 	unsigned long last_stats_update;
+++	unsigned long last_rate_update;
++ 	unsigned int sp_ack_dur;
++ 	unsigned int rate_avg;
++ 
++@@ -98,16 +105,15 @@ struct minstrel_sta_info {
++ 
++ 	u8 max_tp_rate[MAX_THR_RATES];
++ 	u8 max_prob_rate;
+++	u8 cur_intersample_spacing;
++ 	unsigned int total_packets;
++ 	unsigned int sample_packets;
++-	int sample_deferred;
++ 
++ 	unsigned int sample_row;
++ 	unsigned int sample_column;
++ 
++ 	int n_rates;
++ 	struct minstrel_rate *r;
++-	bool prev_sample;
++ 
++ 	/* sampling table */
++ 	u8 *sample_table;
++@@ -120,14 +126,11 @@ struct minstrel_sta_info {
++ 
++ struct minstrel_priv {
++ 	struct ieee80211_hw *hw;
++-	bool has_mrr;
++ 	unsigned int cw_min;
++ 	unsigned int cw_max;
++ 	unsigned int max_retry;
++ 	unsigned int segment_size;
++-	unsigned int update_interval;
++-	unsigned int lookaround_rate;
++-	unsigned int lookaround_rate_mrr;
+++	bool has_mrr;
++ 
++ 	u8 cck_rates[4];
++ 
++--- a/net/mac80211/rc80211_minstrel.c
+++++ b/net/mac80211/rc80211_minstrel.c
++@@ -88,6 +88,32 @@ int minstrel_get_tp_avg(struct minstrel_
++ 		return MINSTREL_TRUNC(100000 * (prob_ewma / usecs));
++ }
++ 
+++/* Check whether rate sampling is required */
+++static inline bool
+++minstrel_requires_sampling(struct minstrel_sta_info *mi,
+++			   struct minstrel_priv *mp,
+++			   bool mrr_capable)
+++{
+++	int rate_sampling_interval;
+++
+++	/* Check multi-rate-retry capabilities & adjust sampling interval */
+++	if (mrr_capable)
+++		rate_sampling_interval = RATE_SAMPLING_INT;
+++	else
+++		rate_sampling_interval = RATE_SAMPLING_INT * 2;
+++
+++	if (mi->cur_intersample_spacing >= MIN_INTERSAMPLE_SPACING &&
+++	    (time_after(jiffies, mi->last_rate_update +
+++	    (rate_sampling_interval * HZ) / 1000))) {
+++		mi->cur_intersample_spacing = 0;
+++		mi->last_rate_update = jiffies;
+++		return true;
+++	} else {
+++		mi->cur_intersample_spacing++;
+++		return false;
+++	}
+++}
+++
++ /* find & sort topmost throughput rates */
++ static inline void
++ minstrel_sort_best_tp_rates(struct minstrel_sta_info *mi, int i, u8 *tp_list)
++@@ -297,11 +323,8 @@ minstrel_tx_status(void *priv, struct ie
++ 	if ((info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE) && (i >= 0))
++ 		mi->sample_packets++;
++ 
++-	if (mi->sample_deferred > 0)
++-		mi->sample_deferred--;
++-
++ 	if (time_after(jiffies, mi->last_stats_update +
++-				(mp->update_interval * HZ) / 1000))
+++				(RATE_SAMPLING_INT * 3 * HZ) / 1000))
++ 		minstrel_update_stats(mp, mi);
++ }
++ 
++@@ -319,7 +342,6 @@ minstrel_get_retry_count(struct minstrel
++ 	return retry;
++ }
++ 
++-
++ static int
++ minstrel_get_next_sample(struct minstrel_sta_info *mi)
++ {
++@@ -343,27 +365,16 @@ minstrel_get_rate(void *priv, struct iee
++ 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++ 	struct minstrel_sta_info *mi = priv_sta;
++ 	struct minstrel_priv *mp = priv;
++-	struct ieee80211_tx_rate *rate = &info->control.rates[0];
+++	struct ieee80211_tx_rate *sampling_setup = NULL;
++ 	struct minstrel_rate *msr, *mr;
++-	unsigned int ndx;
++-	bool mrr_capable;
++-	bool prev_sample;
++-	int delta;
++-	int sampling_ratio;
+++	unsigned int sampling_ndx = 0;
+++	bool indirect_rate_sampling = false;
+++	bool mrr_capable = false;
++ 
++ 	/* management/no-ack frames do not use rate control */
++ 	if (rate_control_send_low(sta, priv_sta, txrc))
++ 		return;
++ 
++-	/* check multi-rate-retry capabilities & adjust lookaround_rate */
++-	mrr_capable = mp->has_mrr &&
++-		      !txrc->rts &&
++-		      !txrc->bss_conf->use_cts_prot;
++-	if (mrr_capable)
++-		sampling_ratio = mp->lookaround_rate_mrr;
++-	else
++-		sampling_ratio = mp->lookaround_rate;
++-
++ 	/* increase sum packet counter */
++ 	mi->total_packets++;
++ 
++@@ -383,76 +394,50 @@ minstrel_get_rate(void *priv, struct iee
++ 	    (info->control.flags & IEEE80211_TX_CTRL_PORT_CTRL_PROTO))
++ 		return;
++ 
++-	delta = (mi->total_packets * sampling_ratio / 100) -
++-			(mi->sample_packets + mi->sample_deferred / 2);
++-
++-	/* delta < 0: no sampling required */
++-	prev_sample = mi->prev_sample;
++-	mi->prev_sample = false;
++-	if (delta < 0 || (!mrr_capable && prev_sample))
++-		return;
+++	mrr_capable = mp->has_mrr && !txrc->rts && !txrc->bss_conf->use_cts_prot;
++ 
++-	if (mi->total_packets >= 10000) {
++-		mi->sample_deferred = 0;
++-		mi->sample_packets = 0;
++-		mi->total_packets = 0;
++-	} else if (delta > mi->n_rates * 2) {
++-		/* With multi-rate retry, not every planned sample
++-		 * attempt actually gets used, due to the way the retry
++-		 * chain is set up - [max_tp,sample,prob,lowest] for
++-		 * sample_rate < max_tp.
++-		 *
++-		 * If there's too much sampling backlog and the link
++-		 * starts getting worse, minstrel would start bursting
++-		 * out lots of sampling frames, which would result
++-		 * in a large throughput loss. */
++-		mi->sample_packets += (delta - mi->n_rates * 2);
++-	}
++-
++-	/* get next random rate sample */
++-	ndx = minstrel_get_next_sample(mi);
++-	msr = &mi->r[ndx];
++-	mr = &mi->r[mi->max_tp_rate[0]];
++-
++-	/* Decide if direct ( 1st mrr stage) or indirect (2nd mrr stage)
++-	 * rate sampling method should be used.
++-	 * Respect such rates that are not sampled for 20 interations.
++-	 */
++-	if (mrr_capable &&
++-	    msr->perfect_tx_time > mr->perfect_tx_time &&
++-	    msr->stats.sample_skipped < 20) {
++-		/* Only use IEEE80211_TX_CTL_RATE_CTRL_PROBE to mark
++-		 * packets that have the sampling rate deferred to the
++-		 * second MRR stage. Increase the sample counter only
++-		 * if the deferred sample rate was actually used.
++-		 * Use the sample_deferred counter to make sure that
++-		 * the sampling is not done in large bursts */
++-		info->flags |= IEEE80211_TX_CTL_RATE_CTRL_PROBE;
++-		rate++;
++-		mi->sample_deferred++;
++-	} else {
++-		if (!msr->sample_limit)
+++	/* check if sampling is required */
+++	if (unlikely(minstrel_requires_sampling(mi, mp, mrr_capable))) {
+++		/* get next random rate sample */
+++		sampling_ndx = minstrel_get_next_sample(mi);
+++		msr = &mi->r[sampling_ndx];
+++
+++		/* If we're not using MRR and the sampling rate already
+++		* has a probability of >95%, we shouldn't be attempting
+++		* to use it, as this only wastes precious airtime */
+++		if (!mrr_capable && (mi->r[sampling_ndx].stats.prob_ewma >
+++		    MINSTREL_FRAC(95, 100)))
++ 			return;
++ 
++-		mi->sample_packets++;
++-		if (msr->sample_limit > 0)
++-			msr->sample_limit--;
++-	}
+++		/* current max throughput rate */
+++		mr = &mi->r[mi->max_tp_rate[0]];
++ 
++-	/* If we're not using MRR and the sampling rate already
++-	 * has a probability of >95%, we shouldn't be attempting
++-	 * to use it, as this only wastes precious airtime */
++-	if (!mrr_capable &&
++-	   (mi->r[ndx].stats.prob_ewma > MINSTREL_FRAC(95, 100)))
+++		/* Check if direct (1st mrr stage) or indirect (2nd mrr stage)
+++		 * rate sampling method should be used. Enforce rate sampling
+++		 * for such rates not sampled within last 20 update cycles. */
+++		if (mrr_capable &&
+++		    msr->perfect_tx_time > mr->perfect_tx_time &&
+++		    msr->stats.sample_skipped < 20)
+++			indirect_rate_sampling = true;
+++
+++		/* setup mrr sampling: indirect -> mrr[1], direct -> mrr[0] */
+++		if (indirect_rate_sampling) {
+++			info->flags |= IEEE80211_TX_CTL_RATE_CTRL_PROBE;
+++			sampling_setup = &info->control.rates[1];
+++		} else {
+++			sampling_setup = &info->control.rates[0];
+++			mi->sample_packets++;
+++		}
+++	} else {
+++		/* no sampling required */
++ 		return;
++-
++-	mi->prev_sample = true;
++-
++-	rate->idx = mi->r[ndx].rix;
++-	rate->count = minstrel_get_retry_count(&mi->r[ndx], info);
+++	}
+++	/* assign sampling parameter*/
+++	sampling_setup->idx = mi->r[sampling_ndx].rix;
+++	sampling_setup->count = minstrel_get_retry_count(&mi->r[sampling_ndx],
+++	                                                 info);
++ }
++ 
++-
++ static void
++ calc_rate_durations(enum nl80211_band band,
++ 		    struct minstrel_rate *d,
++@@ -578,6 +563,7 @@ minstrel_rate_init(void *priv, struct ie
++ 
++ 	mi->n_rates = n;
++ 	mi->last_stats_update = jiffies;
+++	mi->last_rate_update = jiffies;
++ 
++ 	init_sample_table(mi);
++ 	minstrel_update_rates(mp, mi);
++@@ -612,6 +598,8 @@ minstrel_alloc_sta(void *priv, struct ie
++ 		goto error1;
++ 
++ 	mi->last_stats_update = jiffies;
+++	mi->last_rate_update = jiffies;
+++
++ 	return mi;
++ 
++ error1:
++@@ -677,12 +665,6 @@ minstrel_alloc(struct ieee80211_hw *hw,
++ 	mp->cw_min = 15;
++ 	mp->cw_max = 1023;
++ 
++-	/* number of packets (in %) to use for sampling other rates
++-	 * sample less often for non-mrr packets, because the overhead
++-	 * is much higher than with mrr */
++-	mp->lookaround_rate = 5;
++-	mp->lookaround_rate_mrr = 10;
++-
++ 	/* maximum time that the hw is allowed to stay in one MRR segment */
++ 	mp->segment_size = 6000;
++ 
++@@ -696,7 +678,6 @@ minstrel_alloc(struct ieee80211_hw *hw,
++ 		mp->has_mrr = true;
++ 
++ 	mp->hw = hw;
++-	mp->update_interval = 100;
++ 
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	mp->fixed_rate_idx = (u32) -1;
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -777,7 +777,7 @@ minstrel_ht_tx_status(void *priv, struct
++ 	}
++ 
++ 	if (time_after(jiffies, mi->last_stats_update +
++-				(mp->update_interval / 2 * HZ) / 1000)) {
+++				(WIFI_COHERENCE_TIME * 2 * HZ) / 1000)) {
++ 		update = true;
++ 		minstrel_ht_update_stats(mp, mi);
++ 	}
+Index: lede/package/kernel/mac80211/patches/9924-mac80211_minstrel-HT_new_time_based_sampling_approach.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9924-mac80211_minstrel-HT_new_time_based_sampling_approach.patch
+@@ -0,0 +1,410 @@
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -317,12 +317,12 @@ minstrel_ht_get_tp_avg(struct minstrel_h
++ 	nsecs += minstrel_mcs_groups[group].duration[rate];
++ 
++ 	/*
++-	 * For the throughput calculation, limit the probability value to 90% to
+++	 * For the throughput calculation, limit the probability value to 95% to
++ 	 * account for collision related packet error rate fluctuation
++ 	 * (prob is scaled - see MINSTREL_FRAC above)
++ 	 */
++-	if (prob_ewma > MINSTREL_FRAC(90, 100))
++-		return MINSTREL_TRUNC(100000 * ((MINSTREL_FRAC(90, 100) * 1000)
+++	if (prob_ewma > MINSTREL_FRAC(95, 100))
+++		return MINSTREL_TRUNC(100000 * ((MINSTREL_FRAC(95, 100) * 1000)
++ 								      / nsecs));
++ 	else
++ 		return MINSTREL_TRUNC(100000 * ((prob_ewma * 1000) / nsecs));
++@@ -464,9 +464,6 @@ minstrel_ht_update_stats(struct minstrel
++ 		mi->ampdu_packets = 0;
++ 	}
++ 
++-	mi->sample_slow = 0;
++-	mi->sample_count = 0;
++-
++ 	/* Initialize global rate indexes */
++ 	for(j = 0; j < MAX_THR_RATES; j++){
++ 		tmp_mcs_tp_rate[j] = 0;
++@@ -480,8 +477,6 @@ minstrel_ht_update_stats(struct minstrel
++ 		if (!mi->supported[group])
++ 			continue;
++ 
++-		mi->sample_count++;
++-
++ 		for (i = 0; i < MCS_GROUP_RATES; i++) {
++ 			if (!(mi->supported[group] & BIT(i)))
++ 				continue;
++@@ -514,9 +509,6 @@ minstrel_ht_update_stats(struct minstrel
++ 	minstrel_ht_assign_best_tp_rates(mi, tmp_mcs_tp_rate, tmp_cck_tp_rate);
++ 	memcpy(mi->max_tp_rate, tmp_mcs_tp_rate, sizeof(mi->max_tp_rate));
++ 
++-	/* try to sample all available rates during each interval */
++-	mi->sample_count *= 8;
++-
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	/* use fixed index if set */
++ 	if (mp->fixed_rate_idx != -1) {
++@@ -734,12 +726,6 @@ minstrel_ht_tx_status(void *priv, struct
++ 	mi->ampdu_packets++;
++ 	mi->ampdu_len += info->status.ampdu_len;
++ 
++-	if (!mi->sample_wait && !mi->sample_tries && mi->sample_count > 0) {
++-		mi->sample_wait = 16 + 2 * MINSTREL_TRUNC(mi->avg_ampdu_len);
++-		mi->sample_tries = 1;
++-		mi->sample_count--;
++-	}
++-
++ 	if (info->flags & IEEE80211_TX_CTL_RATE_CTRL_PROBE)
++ 		mi->sample_packets += info->status.ampdu_len;
++ 
++@@ -777,7 +763,7 @@ minstrel_ht_tx_status(void *priv, struct
++ 	}
++ 
++ 	if (time_after(jiffies, mi->last_stats_update +
++-				(WIFI_COHERENCE_TIME * 2 * HZ) / 1000)) {
+++				(RATE_SAMPLING_INT * 2 * HZ) / 1000)) {
++ 		update = true;
++ 		minstrel_ht_update_stats(mp, mi);
++ 	}
++@@ -981,96 +967,76 @@ minstrel_get_duration(int index)
++ }
++ 
++ static int
++-minstrel_get_sample_rate(struct minstrel_priv *mp, struct minstrel_ht_sta *mi)
+++minstrel_ht_get_next_sample(struct minstrel_ht_sta *mi)
++ {
++-	struct minstrel_rate_stats *mrs;
++ 	struct minstrel_mcs_group_data *mg;
++-	unsigned int sample_dur, sample_group, cur_max_tp_streams;
++-	int tp_rate1, tp_rate2;
++-	int sample_idx = 0;
++-
++-	if (mi->sample_wait > 0) {
++-		mi->sample_wait--;
++-		return -1;
++-	}
++-
++-	if (!mi->sample_tries)
++-		return -1;
+++	unsigned int sample_group;
+++	unsigned int sample_idx = 0;
+++	unsigned int sample_rate = 0;
++ 
++ 	sample_group = mi->sample_group;
++ 	mg = &mi->groups[sample_group];
++ 	sample_idx = sample_table[mg->column][mg->index];
++ 	minstrel_set_next_sample_idx(mi);
++ 
++-	if (!(mi->supported[sample_group] & BIT(sample_idx)))
++-		return -1;
++-
++-	mrs = &mg->rates[sample_idx];
++-	sample_idx += sample_group * MCS_GROUP_RATES;
++-
++-	/* Set tp_rate1, tp_rate2 to the highest / second highest max_tp_rate */
++-	if (minstrel_get_duration(mi->max_tp_rate[0]) >
++-	    minstrel_get_duration(mi->max_tp_rate[1])) {
++-		tp_rate1 = mi->max_tp_rate[1];
++-		tp_rate2 = mi->max_tp_rate[0];
++-	} else {
++-		tp_rate1 = mi->max_tp_rate[0];
++-		tp_rate2 = mi->max_tp_rate[1];
+++	while (!(mi->supported[sample_group] & BIT(sample_idx))) {
+++		sample_group = mi->sample_group;
+++		mg = &mi->groups[sample_group];
+++		sample_idx = sample_table[mg->column][mg->index];
+++		minstrel_set_next_sample_idx(mi);
++ 	}
++ 
++-	/*
++-	 * Sampling might add some overhead (RTS, no aggregation)
++-	 * to the frame. Hence, don't use sampling for the highest currently
++-	 * used highest throughput or probability rate.
++-	 */
++-	if (sample_idx == mi->max_tp_rate[0] || sample_idx == mi->max_prob_rate)
++-		return -1;
++-
++-	/*
++-	 * Do not sample if the probability is already higher than 95%
++-	 * to avoid wasting airtime.
++-	 */
++-	if (mrs->prob_ewma > MINSTREL_FRAC(95, 100))
++-		return -1;
++-
++-	/*
++-	 * Make sure that lower rates get sampled only occasionally,
++-	 * if the link is working perfectly.
++-	 */
+++	sample_rate = sample_group * MCS_GROUP_RATES + sample_idx;
+++	return sample_rate;
+++}
++ 
++-	cur_max_tp_streams = minstrel_mcs_groups[tp_rate1 /
++-		MCS_GROUP_RATES].streams;
++-	sample_dur = minstrel_get_duration(sample_idx);
++-	if (sample_dur >= minstrel_get_duration(tp_rate2) &&
++-	    (cur_max_tp_streams - 1 <
++-	     minstrel_mcs_groups[sample_group].streams ||
++-	     sample_dur >= minstrel_get_duration(mi->max_prob_rate))) {
++-		if (mrs->sample_skipped < 20)
++-			return -1;
+++/* Check whether rate sampling is required */
+++static inline bool
+++minstrel_ht_requires_sampling(struct minstrel_ht_sta *mi,
+++			      struct minstrel_priv *mp,
+++			      bool mrr_capable)
+++{
+++	int rate_sampling_interval;
+++
+++	/* check multi-rate-retry capabilities & adjust sampling interval */
+++	if (mrr_capable)
+++		rate_sampling_interval = RATE_SAMPLING_INT;
+++	else
+++		rate_sampling_interval = RATE_SAMPLING_INT * 2;
++ 
++-		if (mi->sample_slow++ > 2)
++-			return -1;
+++	if (mi->cur_intersample_spacing >= MIN_INTERSAMPLE_SPACING &&
+++	    (time_after(jiffies, mi->last_rate_update +
+++	    (rate_sampling_interval * HZ) / 1000))) {
+++		mi->cur_intersample_spacing = 0;
+++		mi->last_rate_update = jiffies;
+++		return true;
+++	} else {
+++		mi->cur_intersample_spacing++;
+++		return false;
++ 	}
++-	mi->sample_tries--;
++-
++-	return sample_idx;
++ }
++ 
++ static void
++ minstrel_ht_get_rate(void *priv, struct ieee80211_sta *sta, void *priv_sta,
++                      struct ieee80211_tx_rate_control *txrc)
++ {
++-	const struct mcs_group *sample_group;
+++	const struct mcs_group *sample_rate_group;
++ 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(txrc->skb);
++-	struct ieee80211_tx_rate *rate = &info->status.rates[0];
+++	struct ieee80211_tx_rate *sampling_setup = NULL;
++ 	struct minstrel_ht_sta_priv *msp = priv_sta;
++ 	struct minstrel_ht_sta *mi = &msp->ht;
++ 	struct minstrel_priv *mp = priv;
++-	int sample_idx;
+++	int s_group, s_idx, s_prob, s_max_tp, s_skipped, s_dur, max_r, cur_tp;
+++	int i, random_skipp, cur_max_tp, cur_min_tp, tmp_group, tmp_idx, tmp_prob;
+++	unsigned int sample_rate;
+++	bool rate_sampling = false;
+++	bool mrr_capable = false;
++ 
+++	/* management/no-ack frames do not use rate control */
++ 	if (rate_control_send_low(sta, priv_sta, txrc))
++ 		return;
++ 
+++	/* legacy packets (non 802.11n/ac) are handled by minstrel rc */
++ 	if (!msp->is_ht)
++ 		return mac80211_minstrel.get_rate(priv, sta, &msp->legacy, txrc);
++ 
++@@ -1088,10 +1054,9 @@ minstrel_ht_get_rate(void *priv, struct
++ 	/* Don't use EAPOL frames for sampling on non-mrr hw */
++ 	if (mp->hw->max_rates == 1 &&
++ 	    (info->control.flags & IEEE80211_TX_CTRL_PORT_CTRL_PROTO))
++-		sample_idx = -1;
++-	else
++-		sample_idx = minstrel_get_sample_rate(mp, mi);
+++		return;
++ 
+++	/* increase sum packet counter */
++ 	mi->total_packets++;
++ 
++ 	/* wraparound */
++@@ -1100,25 +1065,116 @@ minstrel_ht_get_rate(void *priv, struct
++ 		mi->sample_packets = 0;
++ 	}
++ 
++-	if (sample_idx < 0)
++-		return;
+++	mrr_capable = mp->has_mrr && !txrc->rts && !txrc->bss_conf->use_cts_prot;
+++	rate_sampling = minstrel_ht_requires_sampling(mi, mp, mrr_capable);
+++
+++	if (unlikely(rate_sampling)) {
+++		/* generate random packet skip interval */
+++		random_skipp = (u32)(((u64) prandom_u32() * RATE_SAMPLING_INT) >> 32);
+++		max_r = MCS_GROUP_RATES * ARRAY_SIZE(minstrel_mcs_groups) + 1;
+++		tmp_group = mi->max_tp_rate[0] / MCS_GROUP_RATES;
+++		tmp_idx = mi->max_tp_rate[0] % MCS_GROUP_RATES;
+++		tmp_prob = mi->groups[tmp_group].rates[tmp_idx].prob_ewma;
+++		cur_tp = minstrel_ht_get_tp_avg(mi, tmp_group, tmp_idx, tmp_prob);
+++		cur_max_tp = minstrel_ht_get_tp_avg(mi, tmp_group, tmp_idx,
+++						    MINSTREL_FRAC(100, 100));
+++		tmp_group = mi->max_tp_rate[1] / MCS_GROUP_RATES;
+++		tmp_idx = mi->max_tp_rate[1] % MCS_GROUP_RATES;
+++		tmp_prob = mi->groups[tmp_group].rates[tmp_idx].prob_ewma;
+++		cur_min_tp = minstrel_ht_get_tp_avg(mi, tmp_group,
+++						    tmp_idx, tmp_prob);
+++
+++		for (i = max_r; i != 0; i--) {
+++			sample_rate = minstrel_ht_get_next_sample(mi);
+++			s_idx = sample_rate % MCS_GROUP_RATES;
+++			s_group = sample_rate / MCS_GROUP_RATES;
+++			s_dur = minstrel_get_duration(sample_rate); //duration or throughput ?
+++			s_skipped = mi->groups[s_group].rates[s_idx].sample_skipped;
+++			s_prob = mi->groups[s_group].rates[s_idx].prob_ewma;
+++			s_max_tp = minstrel_ht_get_tp_avg(mi, s_group, s_idx,
+++							  MINSTREL_FRAC(100, 100));
+++
+++			/* if no sample attempts happened, do initial sampling */
+++			if (mi->groups[s_group].rates[s_idx].att_hist < 3)
+++				break;
+++
+++			/* skipp current max_tp_rate for sampling */
+++			if (sample_rate == mi->max_tp_rate[0])
+++				continue;
+++
+++			/* sample fallback rates with respect to mrr stages */
+++			if ((s_skipped < random_skipp / 2) &&
+++			    (((mp->hw->max_rates == 4) &&
+++			    ((sample_rate == mi->max_tp_rate[1]) ||
+++			    (sample_rate == mi->max_tp_rate[2]) ||
+++			    (sample_rate == mi->max_tp_rate[3]))) ||
+++			    ((mp->hw->max_rates == 3) &&
+++			    ((sample_rate == mi->max_tp_rate[1]) ||
+++			    (sample_rate == mi->max_tp_rate[2]))) ||
+++			    ((mp->hw->max_rates == 2) &&
+++			    (sample_rate == mi->max_tp_rate[1])))) {
+++				mi->groups[s_group].rates[s_idx].sample_skipped++;
+++				continue;
+++			}
+++
+++			/* Reduce sampling of rates 1.5x faster or slower */
+++			if ((s_skipped < random_skipp) &&
+++			    ((s_max_tp * 10 > 15 * cur_max_tp) ||
+++			     (s_max_tp * 15 < 10 * cur_min_tp))) {
+++				mi->groups[s_group].rates[s_idx].sample_skipped++;
+++				continue;
+++			}
++ 
++-	sample_group = &minstrel_mcs_groups[sample_idx / MCS_GROUP_RATES];
++-	info->flags |= IEEE80211_TX_CTL_RATE_CTRL_PROBE;
++-	rate->count = 1;
++-
++-	if (sample_idx / MCS_GROUP_RATES == MINSTREL_CCK_GROUP) {
++-		int idx = sample_idx % ARRAY_SIZE(mp->cck_rates);
++-		rate->idx = mp->cck_rates[idx];
++-	} else if (sample_group->flags & IEEE80211_TX_RC_VHT_MCS) {
++-		ieee80211_rate_set_vht(rate, sample_idx % MCS_GROUP_RATES,
++-				       sample_group->streams);
+++			/* Reduce sampling of rates that do not perform or are too fast */
+++			if ((s_skipped < random_skipp + 30) &&
+++			    ((s_prob < MINSTREL_FRAC(10, 100)) ||
+++			     (s_max_tp * 2 < cur_tp))) {
+++				mi->groups[s_group].rates[s_idx].sample_skipped++;
+++				continue;
+++			}
+++
+++			/* use choosen sample rate if not already perfect */
+++//			if (s_prob < MINSTREL_FRAC(95, 100)) {
+++				mi->groups[s_group].rates[s_idx].sample_skipped = 0;
+++				break;
+++//			}
+++		}
+++
+++		/* if no sampling rate is found, skipp sampling attempt */
+++		if (i == 0)
+++			return;
+++
+++		/* Annotate rate sampling */
+++		sampling_setup = &info->control.rates[0];
+++		mi->sample_packets++;
+++		info->flags |= IEEE80211_TX_CTL_RATE_CTRL_PROBE;
+++
+++		/* Assign proper sampling parameters */
+++		sampling_setup->count = 1;
+++		if (minstrel_mcs_groups[s_group].flags & IEEE80211_TX_RC_MCS) {
+++			sample_rate_group = &minstrel_mcs_groups[s_group];
+++			sampling_setup->idx = s_idx +
+++					(sample_rate_group->streams - 1) * 8;
+++			sampling_setup->flags =
+++					minstrel_mcs_groups[s_group].flags;
+++			return;
+++		} else if (minstrel_mcs_groups[s_group].flags
+++			   & IEEE80211_TX_RC_VHT_MCS) {
+++			ieee80211_rate_set_vht(sampling_setup, s_idx,
+++					  minstrel_mcs_groups[s_group].streams);
+++			sampling_setup->flags =
+++					minstrel_mcs_groups[s_group].flags;
+++			return;
+++		} else {
+++			int idx = sample_rate % ARRAY_SIZE(mp->cck_rates);
+++			sampling_setup->idx = mp->cck_rates[idx];
+++			sampling_setup->flags = 0;
+++			return;
+++		}
++ 	} else {
++-		rate->idx = sample_idx % MCS_GROUP_RATES +
++-			    (sample_group->streams - 1) * 8;
+++		 /* no sampling required */
+++		 return;
++ 	}
++-
++-	rate->flags = sample_group->flags;
++ }
++ 
++ static void
++@@ -1193,16 +1249,6 @@ minstrel_ht_update_caps(void *priv, stru
++ 
++ 	mi->avg_ampdu_len = MINSTREL_FRAC(1, 1);
++ 
++-	/* When using MRR, sample more on the first attempt, without delay */
++-	if (mp->has_mrr) {
++-		mi->sample_count = 16;
++-		mi->sample_wait = 0;
++-	} else {
++-		mi->sample_count = 8;
++-		mi->sample_wait = 8;
++-	}
++-	mi->sample_tries = 4;
++-
++ 	if (!use_vht) {
++ 		stbc = (ht_cap & IEEE80211_HT_CAP_RX_STBC) >>
++ 			IEEE80211_HT_CAP_RX_STBC_SHIFT;
++@@ -1317,7 +1363,10 @@ minstrel_ht_rate_init(void *priv, struct
++ 		      struct cfg80211_chan_def *chandef,
++                       struct ieee80211_sta *sta, void *priv_sta)
++ {
+++	struct minstrel_ht_sta_priv *msp = priv_sta;
+++
++ 	minstrel_ht_update_caps(priv, sband, chandef, sta, priv_sta);
+++	msp->ht.last_rate_update = jiffies;
++ }
++ 
++ static void
++--- a/net/mac80211/rc80211_minstrel_ht.h
+++++ b/net/mac80211/rc80211_minstrel_ht.h
++@@ -73,6 +73,12 @@ struct minstrel_ht_sta {
++ 	/* time of last status update */
++ 	unsigned long last_stats_update;
++ 
+++	/* time of last rate sampling update */
+++	unsigned long last_rate_update;
+++
+++	/* min # of packets between sample attempts */
+++	u8 cur_intersample_spacing;
+++
++ 	/* overhead time in usec for each frame */
++ 	unsigned int overhead;
++ 	unsigned int overhead_rtscts;
++@@ -84,11 +90,6 @@ struct minstrel_ht_sta {
++ 	u32 tx_flags;
++ 	u8 stream_errors;
++ 
++-	u8 sample_wait;
++-	u8 sample_tries;
++-	u8 sample_count;
++-	u8 sample_slow;
++-
++ 	/* current MCS group to be sampled */
++ 	u8 sample_group;
++ 
+Index: lede/package/kernel/mac80211/patches/9925-mac80211_minstrel-ht_disable_rts_for_mrr-fallback-rates.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9925-mac80211_minstrel-ht_disable_rts_for_mrr-fallback-rates.patch
+@@ -0,0 +1,16 @@
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -864,11 +864,9 @@ minstrel_ht_set_rate(struct minstrel_pri
++ 
++ 	/* enable RTS/CTS if needed:
++ 	 *  - if station is in dynamic SMPS (and streams > 1)
++-	 *  - for fallback rates, to increase chances of getting through
++ 	 */
++-	if (offset > 0 ||
++-	    (mi->sta->smps_mode == IEEE80211_SMPS_DYNAMIC &&
++-	     group->streams > 1)) {
+++	if (mi->sta->smps_mode == IEEE80211_SMPS_DYNAMIC &&
+++	     group->streams > 1) {
++ 		ratetbl->rate[offset].count = ratetbl->rate[offset].count_rts;
++ 		flags |= IEEE80211_TX_RC_USE_RTS_CTS;
++ 	}
+Index: lede/package/kernel/mac80211/patches/9951-mac80211_add-tx-power-annotation.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9951-mac80211_add-tx-power-annotation.patch
+@@ -0,0 +1,216 @@
++--- a/include/net/mac80211.h
+++++ b/include/net/mac80211.h
++@@ -895,7 +895,12 @@ struct ieee80211_tx_info {
++ 					u8 use_cts_prot:1;
++ 					u8 short_preamble:1;
++ 					u8 skip_table:1;
++-					/* 2 bytes free */
+++
+++					/* txpower field refers to the first
+++					 * entry of rates only (if present).
+++					 */
+++					s8 txpower;
+++					/* 1 byte free */
++ 				};
++ 				/* only needed before rate control */
++ 				unsigned long jiffies;
++@@ -1277,6 +1282,7 @@ enum ieee80211_conf_flags {
++  * @IEEE80211_CONF_CHANGE_SMPS: Spatial multiplexing powersave mode changed
++  *	Note that this is only valid if channel contexts are not used,
++  *	otherwise each channel context has the number of chains listed.
+++ * @IEEE80211_CONF_CHANGE_ACK_TXPOWER: TX power in dBm for ACK packets changed
++  */
++ enum ieee80211_conf_changed {
++ 	IEEE80211_CONF_CHANGE_SMPS		= BIT(1),
++@@ -1287,6 +1293,7 @@ enum ieee80211_conf_changed {
++ 	IEEE80211_CONF_CHANGE_CHANNEL		= BIT(6),
++ 	IEEE80211_CONF_CHANGE_RETRY_LIMITS	= BIT(7),
++ 	IEEE80211_CONF_CHANGE_IDLE		= BIT(8),
+++	IEEE80211_CONF_CHANGE_ACK_TXPOWER	= BIT(9),
++ };
++ 
++ /**
++@@ -1342,6 +1349,11 @@ enum ieee80211_smps_mode {
++  *	configured for an HT channel.
++  *	Note that this is only valid if channel contexts are not used,
++  *	otherwise each channel context has the number of chains listed.
+++ *
+++ * @min_txpower: minimum tx power level in dBm, that is configured for the
+++ *	hardware. Negative values are possible (e.g. -5 dBm).
+++ *
+++ * @ack_txpower: tx power level in dBm of mac layer ACK packets.
++  */
++ struct ieee80211_conf {
++ 	u32 flags;
++@@ -1356,6 +1368,8 @@ struct ieee80211_conf {
++ 	struct cfg80211_chan_def chandef;
++ 	bool radar_enabled;
++ 	enum ieee80211_smps_mode smps_mode;
+++	s8 min_txpower;
+++	s8 ack_txpower;
++ };
++ 
++ /**
++@@ -1716,13 +1730,14 @@ enum ieee80211_sta_rx_bandwidth {
++  * struct ieee80211_sta_rates - station rate selection table
++  *
++  * @rcu_head: RCU head used for freeing the table on update
++- * @rate: transmit rates/flags to be used by default.
+++ * @rate: transmit rates/power/flags to be used by default.
++  *	Overriding entries per-packet is possible by using cb tx control.
++  */
++ struct ieee80211_sta_rates {
++ 	struct rcu_head rcu_head;
++ 	struct {
++ 		s8 idx;
+++		s8 txpower;
++ 		u8 count;
++ 		u8 count_cts;
++ 		u8 count_rts;
++@@ -2048,6 +2063,16 @@ struct ieee80211_txq {
++  * @IEEE80211_HW_NEEDS_ALIGNED4_SKBS: Driver need aligned skbs to four-byte.
++  *	Padding will be added after ieee80211_hdr, before IV/LLC.
++  *
+++ * @IEEE80211_HW_SUPPORTS_TPC_PER_PACKET: The hardware/driver supports transmit
+++ *	power control (TPC) with one power level per data packet.
+++ *
+++ * @IEEE80211_HW_SUPPORTS_TPC_PER_MRR: The hardware/driver supports transmit
+++ *	power control (TPC) with individual power levels for each
+++ *	multi-rate-retry (mrr) stage per data packet.
+++ *
+++ * @IEEE80211_HW_SUPPORTS_TPC_FOR_ACK_PACKETS: The hardware/driver supports
+++ *	transmit power control (TPC) for ACK packets.
+++ *
++  * @NUM_IEEE80211_HW_FLAGS: number of hardware flags, used for sizing arrays
++  */
++ enum ieee80211_hw_flags {
++@@ -2091,6 +2116,9 @@ enum ieee80211_hw_flags {
++ 	IEEE80211_HW_REPORTS_LOW_ACK,
++ 	IEEE80211_HW_SUPPORTS_TX_FRAG,
++ 	IEEE80211_HW_NEEDS_ALIGNED4_SKBS,
+++	IEEE80211_HW_SUPPORTS_TPC_PER_PACKET,
+++	IEEE80211_HW_SUPPORTS_TPC_PER_MRR,
+++	IEEE80211_HW_SUPPORTS_TPC_FOR_ACK_PACKETS,
++ 
++ 	/* keep last, obviously */
++ 	NUM_IEEE80211_HW_FLAGS
++@@ -2206,6 +2234,9 @@ enum ieee80211_hw_flags {
++  *	supported by HW.
++  * @max_nan_de_entries: maximum number of NAN DE functions supported by the
++  *	device.
+++ *
+++ * @min_txpower: minimum tx power level in dBm, that is supported by the
+++ *	hardware. Negative values are possible (e.g. -5 dBm).
++  */
++ struct ieee80211_hw {
++ 	struct ieee80211_conf conf;
++@@ -2241,6 +2272,7 @@ struct ieee80211_hw {
++ 	u8 n_cipher_schemes;
++ 	const struct ieee80211_cipher_scheme *cipher_schemes;
++ 	u8 max_nan_de_entries;
+++	s8 min_txpower;
++ };
++ 
++ static inline bool _ieee80211_hw_check(struct ieee80211_hw *hw,
++--- a/net/mac80211/rate.c
+++++ b/net/mac80211/rate.c
++@@ -848,6 +848,8 @@ void rate_control_get_rate(struct ieee80
++ 		info->control.rates[i].count = 0;
++ 	}
++ 
+++	info->control.txpower = sdata->vif.bss_conf.txpower;
+++
++ 	if (ieee80211_hw_check(&sdata->local->hw, HAS_RATE_CONTROL))
++ 		return;
++ 
++--- a/net/mac80211/rc80211_minstrel.c
+++++ b/net/mac80211/rc80211_minstrel.c
++@@ -52,6 +52,7 @@
++ #include <linux/ieee80211.h>
++ #include <linux/slab.h>
++ #include <net/mac80211.h>
+++#include "sta_info.h"
++ #include "rate.h"
++ #include "rc80211_minstrel.h"
++ 
++@@ -151,12 +152,21 @@ static void
++ minstrel_update_rates(struct minstrel_priv *mp, struct minstrel_sta_info *mi)
++ {
++ 	struct ieee80211_sta_rates *ratetbl;
+++	struct sta_info *sta;
+++	s8 txpower;
++ 	int i = 0;
++ 
+++	sta = container_of(mi->sta, struct sta_info, sta);
+++	txpower = sta->sdata->vif.bss_conf.txpower;
+++
++ 	ratetbl = kzalloc(sizeof(*ratetbl), GFP_ATOMIC);
++ 	if (!ratetbl)
++ 		return;
++ 
+++	for (i = 0; i < ARRAY_SIZE(ratetbl->rate); i++)
+++		ratetbl->rate[i].txpower = txpower;
+++	i = 0;
+++
++ 	/* Start with max_tp_rate */
++ 	minstrel_set_rate(mi, ratetbl, i++, mi->max_tp_rate[0]);
++ 
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -932,12 +932,21 @@ static void
++ minstrel_ht_update_rates(struct minstrel_priv *mp, struct minstrel_ht_sta *mi)
++ {
++ 	struct ieee80211_sta_rates *rates;
+++	struct sta_info *sta;
+++	s8 txpower;
++ 	int i = 0;
++ 
+++	sta = container_of(mi->sta, struct sta_info, sta);
+++	txpower = sta->sdata->vif.bss_conf.txpower;
+++
++ 	rates = kzalloc(sizeof(*rates), GFP_ATOMIC);
++ 	if (!rates)
++ 		return;
++ 
+++	for (i = 0; i < ARRAY_SIZE(rates->rate); i++)
+++		rates->rate[i].txpower = txpower;
+++	i = 0;
+++
++ 	/* Start with max_tp_rate[0] */
++ 	minstrel_ht_set_rate(mp, mi, rates, i++, mi->max_tp_rate[0]);
++ 
++--- a/net/mac80211/debugfs.c
+++++ b/net/mac80211/debugfs.c
++@@ -212,6 +212,9 @@ static const char *hw_flag_names[] = {
++ 	FLAG(REPORTS_LOW_ACK),
++ 	FLAG(SUPPORTS_TX_FRAG),
++ 	FLAG(NEEDS_ALIGNED4_SKBS),
+++	FLAG(SUPPORTS_TPC_PER_PACKET),
+++	FLAG(SUPPORTS_TPC_PER_MRR),
+++	FLAG(SUPPORTS_TPC_FOR_ACK_PACKETS),
++ #undef FLAG
++ };
++ 
++--- a/net/mac80211/main.c
+++++ b/net/mac80211/main.c
++@@ -159,6 +159,7 @@ static u32 ieee80211_hw_conf_chan(struct
++ 	if (local->hw.conf.power_level != power) {
++ 		changed |= IEEE80211_CONF_CHANGE_POWER;
++ 		local->hw.conf.power_level = power;
+++		local->hw.conf.ack_txpower = power;
++ 	}
++ 
++ 	return changed;
++@@ -1080,6 +1081,12 @@ int ieee80211_register_hw(struct ieee802
++ 
++ 	local->dynamic_ps_forced_timeout = -1;
++ 
+++	/*
+++	 * if the driver doesn't specify a min txpower we
+++	 * use 0dBm which should be a safe default
+++	 */
+++	local->hw.conf.min_txpower = local->hw.min_txpower = 0;
+++
++ 	if (!local->hw.max_nan_de_entries)
++ 		local->hw.max_nan_de_entries = IEEE80211_MAX_NAN_INSTANCE_ID;
++ 
+Index: lede/package/kernel/mac80211/patches/9952-mac80211_add_debugfs_to_set_txrate-and-txpower_per_sta.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9952-mac80211_add_debugfs_to_set_txrate-and-txpower_per_sta.patch
+@@ -0,0 +1,199 @@
++--- a/net/mac80211/rc80211_minstrel.c
+++++ b/net/mac80211/rc80211_minstrel.c
++@@ -186,6 +186,14 @@ minstrel_update_rates(struct minstrel_pr
++ 	ratetbl->rate[i].count_cts = mp->max_retry;
++ 	ratetbl->rate[i].count_rts = mp->max_retry;
++ 
+++#ifdef CPTCFG_MAC80211_DEBUGFS
+++	/* use fixed txpower if set */
+++	if (mi->fixed_txpower != 255) {
+++		for (i = 0; i < ARRAY_SIZE(ratetbl->rate); i++)
+++			ratetbl->rate[i].txpower = mi->fixed_txpower;
+++	}
+++#endif
+++
++ 	rate_control_set_rates(mp->hw, mi->sta, ratetbl);
++ }
++ 
++@@ -291,9 +299,13 @@ minstrel_update_stats(struct minstrel_pr
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	/* use fixed index if set */
++ 	if (mp->fixed_rate_idx != -1) {
++-		mi->max_tp_rate[0] = mp->fixed_rate_idx;
++-		mi->max_tp_rate[1] = mp->fixed_rate_idx;
+++		for (i = 0; i < 4; i++)
+++			mi->max_tp_rate[i] = mp->fixed_rate_idx;
++ 		mi->max_prob_rate = mp->fixed_rate_idx;
+++	} else if (mi->fixed_txrate != -1) {
+++		for (i = 0; i < 4; i++)
+++			mi->max_tp_rate[i] = mi->fixed_txrate;
+++		mi->max_prob_rate = mi->fixed_txrate;
++ 	}
++ #endif
++ 
++@@ -395,8 +407,12 @@ minstrel_get_rate(void *priv, struct iee
++ 	}
++ 
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++-	if (mp->fixed_rate_idx != -1)
+++	if ((mp->fixed_rate_idx != -1) || (mi->fixed_txrate != -1)) {
+++		/* use fixed txpower for rate sampling packets if set */
+++		if (mi->fixed_txpower != 255)
+++			info->control.txpower = mi->fixed_txpower;
++ 		return;
+++	}
++ #endif
++ 
++ 	/* Don't use EAPOL frames for sampling on non-mrr hw */
++--- a/net/mac80211/rc80211_minstrel.h
+++++ b/net/mac80211/rc80211_minstrel.h
++@@ -121,6 +121,10 @@ struct minstrel_sta_info {
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	struct dentry *dbg_stats;
++ 	struct dentry *dbg_stats_csv;
+++	struct dentry *dbg_fixed_txpower;
+++	struct dentry *dbg_fixed_txrate;
+++	u8 fixed_txpower;
+++	u32 fixed_txrate;
++ #endif
++ };
++ 
++--- a/net/mac80211/rc80211_minstrel_debugfs.c
+++++ b/net/mac80211/rc80211_minstrel_debugfs.c
++@@ -219,6 +219,12 @@ minstrel_add_sta_debugfs(void *priv, voi
++ 
++ 	mi->dbg_stats_csv = debugfs_create_file("rc_stats_csv", S_IRUGO, dir,
++ 			mi, &minstrel_stat_csv_fops);
+++	mi->fixed_txpower = (u8) -1;
+++	mi->dbg_fixed_txpower = debugfs_create_u8("fixed_txpower",
+++			S_IRUGO | S_IWUGO, dir, &mi->fixed_txpower);
+++	mi->fixed_txrate = (u32) -1;
+++	mi->dbg_fixed_txrate = debugfs_create_u32("fixed_txrate",
+++			S_IRUGO | S_IWUGO, dir, &mi->fixed_txrate);
++ }
++ 
++ void
++@@ -227,6 +233,7 @@ minstrel_remove_sta_debugfs(void *priv,
++ 	struct minstrel_sta_info *mi = priv_sta;
++ 
++ 	debugfs_remove(mi->dbg_stats);
++-
++ 	debugfs_remove(mi->dbg_stats_csv);
+++	debugfs_remove(mi->dbg_fixed_txpower);
+++	debugfs_remove(mi->dbg_fixed_txrate);
++ }
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -457,6 +457,9 @@ minstrel_ht_update_stats(struct minstrel
++ 	int index, group, i, j, cur_prob;
++ 	u16 tmp_mcs_tp_rate[MAX_THR_RATES], tmp_cck_tp_rate[MAX_THR_RATES];
++ 
+++#ifdef CPTCFG_MAC80211_DEBUGFS
+++	struct minstrel_ht_sta_priv *msp;
+++#endif
++ 	if (mi->ampdu_packets > 0) {
++ 		mi->avg_ampdu_len = minstrel_ewma(mi->avg_ampdu_len,
++ 			MINSTREL_FRAC(mi->ampdu_len, mi->ampdu_packets), EWMA_LEVEL);
++@@ -511,10 +514,15 @@ minstrel_ht_update_stats(struct minstrel
++ 
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	/* use fixed index if set */
+++	msp = container_of(mi, struct minstrel_ht_sta_priv, ht);
++ 	if (mp->fixed_rate_idx != -1) {
++ 		for (i = 0; i < 4; i++)
++ 			mi->max_tp_rate[i] = mp->fixed_rate_idx;
++ 		mi->max_prob_rate = mp->fixed_rate_idx;
+++	} else if (msp->fixed_txrate != -1) {
+++		for (i = 0; i < 4; i++)
+++			mi->max_tp_rate[i] = msp->fixed_txrate;
+++		mi->max_prob_rate = msp->fixed_txrate;
++ 	}
++ #endif
++ 
++@@ -596,7 +604,9 @@ minstrel_ht_downgrade_rate(struct minstr
++ 	int tmp_group, tmp_flags, tmp_streams;
++ 
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++-	if (mp->fixed_rate_idx != -1)
+++	struct minstrel_ht_sta_priv *msp;
+++	msp = container_of(mi, struct minstrel_ht_sta_priv, ht);
+++	if ((mp->fixed_rate_idx != -1) || (msp->fixed_txrate != -1))
++ 		return;
++ #endif
++ 
++@@ -935,6 +945,9 @@ minstrel_ht_update_rates(struct minstrel
++ 	struct sta_info *sta;
++ 	s8 txpower;
++ 	int i = 0;
+++#ifdef CPTCFG_MAC80211_DEBUGFS
+++	struct minstrel_ht_sta_priv *msp;
+++#endif
++ 
++ 	sta = container_of(mi->sta, struct sta_info, sta);
++ 	txpower = sta->sdata->vif.bss_conf.txpower;
++@@ -963,6 +976,16 @@ minstrel_ht_update_rates(struct minstrel
++ 
++ 	mi->sta->max_rc_amsdu_len = minstrel_ht_get_max_amsdu_len(mi);
++ 	rates->rate[i].idx = -1;
+++
+++#ifdef CPTCFG_MAC80211_DEBUGFS
+++        /* use fixed txpower if set */
+++	msp = container_of(mi, struct minstrel_ht_sta_priv, ht);
+++        if (msp->fixed_txpower != 255) {
+++		for (i = 0; i < ARRAY_SIZE(rates->rate); i++)
+++			rates->rate[i].txpower = msp->fixed_txpower;
+++	}
+++#endif
+++
++ 	rate_control_set_rates(mp->hw, mi->sta, rates);
++ }
++ 
++@@ -1054,8 +1077,12 @@ minstrel_ht_get_rate(void *priv, struct
++ 	info->flags |= mi->tx_flags;
++ 
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++-	if (mp->fixed_rate_idx != -1)
+++	if ((mp->fixed_rate_idx != -1) || (msp->fixed_txrate != -1)) {
+++		/* use fixed txpower for rate sampling packets if set */
+++		if (msp->fixed_txpower != 255)
+++			info->control.txpower = msp->fixed_txpower;
++ 		return;
+++	}
++ #endif
++ 
++ 	/* Don't use EAPOL frames for sampling on non-mrr hw */
++--- a/net/mac80211/rc80211_minstrel_ht.h
+++++ b/net/mac80211/rc80211_minstrel_ht.h
++@@ -111,6 +111,10 @@ struct minstrel_ht_sta_priv {
++ #ifdef CPTCFG_MAC80211_DEBUGFS
++ 	struct dentry *dbg_stats;
++ 	struct dentry *dbg_stats_csv;
+++	struct dentry *dbg_fixed_txpower;
+++	struct dentry *dbg_fixed_txrate;
+++	u8 fixed_txpower;
+++	u32 fixed_txrate;
++ #endif
++ 	void *ratelist;
++ 	void *sample_table;
++--- a/net/mac80211/rc80211_minstrel_ht_debugfs.c
+++++ b/net/mac80211/rc80211_minstrel_ht_debugfs.c
++@@ -307,6 +307,12 @@ minstrel_ht_add_sta_debugfs(void *priv,
++ 			&minstrel_ht_stat_fops);
++ 	msp->dbg_stats_csv = debugfs_create_file("rc_stats_csv", S_IRUGO,
++ 			     dir, msp, &minstrel_ht_stat_csv_fops);
+++	msp->fixed_txpower = (u8) -1;
+++	msp->dbg_fixed_txpower = debugfs_create_u8("fixed_txpower",
+++			S_IRUGO | S_IWUGO, dir, &msp->fixed_txpower);
+++	msp->fixed_txrate = (u32) -1;
+++	msp->dbg_fixed_txrate = debugfs_create_u32("fixed_txrate",
+++			S_IRUGO | S_IWUGO, dir, &msp->fixed_txrate);
++ }
++ 
++ void
++@@ -316,4 +322,6 @@ minstrel_ht_remove_sta_debugfs(void *pri
++ 
++ 	debugfs_remove(msp->dbg_stats);
++ 	debugfs_remove(msp->dbg_stats_csv);
+++	debugfs_remove(msp->dbg_fixed_txpower);
+++	debugfs_remove(msp->dbg_fixed_txrate);
++ }
+Index: lede/package/kernel/mac80211/patches/9953-mac80211-make-rate-control-tx-status-API-more-extens.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9953-mac80211-make-rate-control-tx-status-API-more-extens.patch
+@@ -0,0 +1,226 @@
++--- a/include/net/mac80211.h
+++++ b/include/net/mac80211.h
++@@ -948,6 +948,19 @@ struct ieee80211_tx_info {
++ };
++ 
++ /**
+++ * struct ieee80211_tx_status - extended tx staus info for rate control
+++ *
+++ * @sta: Station that the packet was transmitted for
+++ * @info: Basic tx status information
+++ * @skb: Packet skb (can be NULL if not provided by the driver)
+++ */
+++struct ieee80211_tx_status {
+++	struct ieee80211_sta *sta;
+++	struct ieee80211_tx_info *info;
+++	struct sk_buff *skb;
+++};
+++
+++/**
++  * struct ieee80211_scan_ies - descriptors for different blocks of IEs
++  *
++  * This structure is used to point to different blocks of IEs in HW scan
++@@ -5494,6 +5507,7 @@ struct ieee80211_tx_rate_control {
++ 	bool bss;
++ };
++ 
+++
++ struct rate_control_ops {
++ 	const char *name;
++ 	void *(*alloc)(struct ieee80211_hw *hw, struct dentry *debugfsdir);
++@@ -5510,10 +5524,9 @@ struct rate_control_ops {
++ 	void (*free_sta)(void *priv, struct ieee80211_sta *sta,
++ 			 void *priv_sta);
++ 
++-	void (*tx_status_noskb)(void *priv,
++-				struct ieee80211_supported_band *sband,
++-				struct ieee80211_sta *sta, void *priv_sta,
++-				struct ieee80211_tx_info *info);
+++	void (*tx_status_ext)(void *priv,
+++			      struct ieee80211_supported_band *sband,
+++			      void *priv_sta, struct ieee80211_tx_status *st);
++ 	void (*tx_status)(void *priv, struct ieee80211_supported_band *sband,
++ 			  struct ieee80211_sta *sta, void *priv_sta,
++ 			  struct sk_buff *skb);
++--- a/net/mac80211/rate.c
+++++ b/net/mac80211/rate.c
++@@ -61,6 +61,28 @@ void rate_control_rate_init(struct sta_i
++ 	set_sta_flag(sta, WLAN_STA_RATE_CONTROL);
++ }
++ 
+++void rate_control_tx_status(struct ieee80211_local *local,
+++			    struct ieee80211_supported_band *sband,
+++			    struct ieee80211_tx_status *st)
+++{
+++	struct rate_control_ref *ref = local->rate_ctrl;
+++	struct sta_info *sta = container_of(st->sta, struct sta_info, sta);
+++	void *priv_sta = sta->rate_ctrl_priv;
+++
+++	if (!ref || !test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
+++		return;
+++
+++	spin_lock_bh(&sta->rate_ctrl_lock);
+++	if (ref->ops->tx_status_ext)
+++		ref->ops->tx_status_ext(ref->priv, sband, priv_sta, st);
+++	else if (st->skb)
+++		ref->ops->tx_status(ref->priv, sband, st->sta, priv_sta, st->skb);
+++	else
+++		WARN_ON_ONCE(1);
+++
+++	spin_unlock_bh(&sta->rate_ctrl_lock);
+++}
+++
++ void rate_control_rate_update(struct ieee80211_local *local,
++ 				    struct ieee80211_supported_band *sband,
++ 				    struct sta_info *sta, u32 changed)
++--- a/net/mac80211/rate.h
+++++ b/net/mac80211/rate.h
++@@ -29,47 +29,9 @@ void rate_control_get_rate(struct ieee80
++ 			   struct sta_info *sta,
++ 			   struct ieee80211_tx_rate_control *txrc);
++ 
++-static inline void rate_control_tx_status(struct ieee80211_local *local,
++-					  struct ieee80211_supported_band *sband,
++-					  struct sta_info *sta,
++-					  struct sk_buff *skb)
++-{
++-	struct rate_control_ref *ref = local->rate_ctrl;
++-	struct ieee80211_sta *ista = &sta->sta;
++-	void *priv_sta = sta->rate_ctrl_priv;
++-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++-
++-	if (!ref || !test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
++-		return;
++-
++-	spin_lock_bh(&sta->rate_ctrl_lock);
++-	if (ref->ops->tx_status)
++-		ref->ops->tx_status(ref->priv, sband, ista, priv_sta, skb);
++-	else
++-		ref->ops->tx_status_noskb(ref->priv, sband, ista, priv_sta, info);
++-	spin_unlock_bh(&sta->rate_ctrl_lock);
++-}
++-
++-static inline void
++-rate_control_tx_status_noskb(struct ieee80211_local *local,
++-			     struct ieee80211_supported_band *sband,
++-			     struct sta_info *sta,
++-			     struct ieee80211_tx_info *info)
++-{
++-	struct rate_control_ref *ref = local->rate_ctrl;
++-	struct ieee80211_sta *ista = &sta->sta;
++-	void *priv_sta = sta->rate_ctrl_priv;
++-
++-	if (!ref || !test_sta_flag(sta, WLAN_STA_RATE_CONTROL))
++-		return;
++-
++-	if (WARN_ON_ONCE(!ref->ops->tx_status_noskb))
++-		return;
++-
++-	spin_lock_bh(&sta->rate_ctrl_lock);
++-	ref->ops->tx_status_noskb(ref->priv, sband, ista, priv_sta, info);
++-	spin_unlock_bh(&sta->rate_ctrl_lock);
++-}
+++void rate_control_tx_status(struct ieee80211_local *local,
+++			    struct ieee80211_supported_band *sband,
+++			    struct ieee80211_tx_status *st);
++ 
++ void rate_control_rate_init(struct sta_info *sta);
++ void rate_control_rate_update(struct ieee80211_local *local,
++--- a/net/mac80211/rc80211_minstrel.c
+++++ b/net/mac80211/rc80211_minstrel.c
++@@ -317,9 +317,9 @@ minstrel_update_stats(struct minstrel_pr
++ 
++ static void
++ minstrel_tx_status(void *priv, struct ieee80211_supported_band *sband,
++-		   struct ieee80211_sta *sta, void *priv_sta,
++-		   struct ieee80211_tx_info *info)
+++		   void *priv_sta, struct ieee80211_tx_status *st)
++ {
+++	struct ieee80211_tx_info *info = st->info;
++ 	struct minstrel_priv *mp = priv;
++ 	struct minstrel_sta_info *mi = priv_sta;
++ 	struct ieee80211_tx_rate *ar = info->status.rates;
++@@ -744,7 +744,7 @@ static u32 minstrel_get_expected_through
++ 
++ const struct rate_control_ops mac80211_minstrel = {
++ 	.name = "minstrel",
++-	.tx_status_noskb = minstrel_tx_status,
+++	.tx_status_ext = minstrel_tx_status,
++ 	.get_rate = minstrel_get_rate,
++ 	.rate_init = minstrel_rate_init,
++ 	.alloc = minstrel_alloc,
++--- a/net/mac80211/rc80211_minstrel_ht.c
+++++ b/net/mac80211/rc80211_minstrel_ht.c
++@@ -707,9 +707,9 @@ minstrel_aggr_check(struct ieee80211_sta
++ 
++ static void
++ minstrel_ht_tx_status(void *priv, struct ieee80211_supported_band *sband,
++-                      struct ieee80211_sta *sta, void *priv_sta,
++-                      struct ieee80211_tx_info *info)
+++                      void *priv_sta, struct ieee80211_tx_status *st)
++ {
+++	struct ieee80211_tx_info *info = st->info;
++ 	struct minstrel_ht_sta_priv *msp = priv_sta;
++ 	struct minstrel_ht_sta *mi = &msp->ht;
++ 	struct ieee80211_tx_rate *ar = info->status.rates;
++@@ -719,8 +719,8 @@ minstrel_ht_tx_status(void *priv, struct
++ 	int i;
++ 
++ 	if (!msp->is_ht)
++-		return mac80211_minstrel.tx_status_noskb(priv, sband, sta,
++-							 &msp->legacy, info);
+++		return mac80211_minstrel.tx_status_ext(priv, sband,
+++						       &msp->legacy, st);
++ 
++ 	/* This packet was aggregated but doesn't carry status info */
++ 	if ((info->flags & IEEE80211_TX_CTL_AMPDU) &&
++@@ -1493,7 +1493,7 @@ static u32 minstrel_ht_get_expected_thro
++ 
++ static const struct rate_control_ops mac80211_minstrel_ht = {
++ 	.name = "minstrel_ht",
++-	.tx_status_noskb = minstrel_ht_tx_status,
+++	.tx_status_ext = minstrel_ht_tx_status,
++ 	.get_rate = minstrel_ht_get_rate,
++ 	.rate_init = minstrel_ht_rate_init,
++ 	.rate_update = minstrel_ht_rate_update,
++--- a/net/mac80211/status.c
+++++ b/net/mac80211/status.c
++@@ -638,6 +638,7 @@ void ieee80211_tx_status_noskb(struct ie
++ {
++ 	struct ieee80211_local *local = hw_to_local(hw);
++ 	struct ieee80211_supported_band *sband;
+++	struct ieee80211_tx_status status = {};
++ 	int retry_count;
++ 	bool acked, noack_success;
++ 
++@@ -670,7 +671,9 @@ void ieee80211_tx_status_noskb(struct ie
++ 			ieee80211_lost_packet(sta, info);
++ 		}
++ 
++-		rate_control_tx_status_noskb(local, sband, sta, info);
+++		status.sta = pubsta;
+++		status.info = info;
+++		rate_control_tx_status(local, sband, &status);
++ 	}
++ 
++ 	if (acked || noack_success) {
++@@ -762,6 +765,7 @@ void ieee80211_tx_status(struct ieee8021
++ 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
++ 	struct ieee80211_local *local = hw_to_local(hw);
++ 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+++	struct ieee80211_tx_status status = {};
++ 	__le16 fc;
++ 	struct ieee80211_supported_band *sband;
++ 	struct rhlist_head *tmp;
++@@ -871,7 +875,10 @@ void ieee80211_tx_status(struct ieee8021
++ 			}
++ 		}
++ 
++-		rate_control_tx_status(local, sband, sta, skb);
+++		status.sta = &sta->sta;
+++		status.skb = skb;
+++		status.info = info;
+++		rate_control_tx_status(local, sband, &status);
++ 		if (ieee80211_vif_is_mesh(&sta->sdata->vif))
++ 			ieee80211s_update_metric(local, sta, skb);
++ 
+Index: lede/package/kernel/mac80211/patches/9954-mac80211-move-ieee80211_tx_status_noskb-below-ieee80.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9954-mac80211-move-ieee80211_tx_status_noskb-below-ieee80.patch
+@@ -0,0 +1,132 @@
++--- a/net/mac80211/status.c
+++++ b/net/mac80211/status.c
++@@ -632,64 +632,6 @@ static int ieee80211_tx_get_rates(struct
++ 	return rates_idx;
++ }
++ 
++-void ieee80211_tx_status_noskb(struct ieee80211_hw *hw,
++-			       struct ieee80211_sta *pubsta,
++-			       struct ieee80211_tx_info *info)
++-{
++-	struct ieee80211_local *local = hw_to_local(hw);
++-	struct ieee80211_supported_band *sband;
++-	struct ieee80211_tx_status status = {};
++-	int retry_count;
++-	bool acked, noack_success;
++-
++-	ieee80211_tx_get_rates(hw, info, &retry_count);
++-
++-	sband = hw->wiphy->bands[info->band];
++-
++-	acked = !!(info->flags & IEEE80211_TX_STAT_ACK);
++-	noack_success = !!(info->flags & IEEE80211_TX_STAT_NOACK_TRANSMITTED);
++-
++-	if (pubsta) {
++-		struct sta_info *sta;
++-
++-		sta = container_of(pubsta, struct sta_info, sta);
++-
++-		if (!acked)
++-			sta->status_stats.retry_failed++;
++-		sta->status_stats.retry_count += retry_count;
++-
++-		if (acked) {
++-			sta->status_stats.last_ack = jiffies;
++-
++-			if (sta->status_stats.lost_packets)
++-				sta->status_stats.lost_packets = 0;
++-
++-			/* Track when last TDLS packet was ACKed */
++-			if (test_sta_flag(sta, WLAN_STA_TDLS_PEER_AUTH))
++-				sta->status_stats.last_tdls_pkt_time = jiffies;
++-		} else {
++-			ieee80211_lost_packet(sta, info);
++-		}
++-
++-		status.sta = pubsta;
++-		status.info = info;
++-		rate_control_tx_status(local, sband, &status);
++-	}
++-
++-	if (acked || noack_success) {
++-		I802_DEBUG_INC(local->dot11TransmittedFrameCount);
++-		if (!pubsta)
++-			I802_DEBUG_INC(local->dot11MulticastTransmittedFrameCount);
++-		if (retry_count > 0)
++-			I802_DEBUG_INC(local->dot11RetryCount);
++-		if (retry_count > 1)
++-			I802_DEBUG_INC(local->dot11MultipleRetryCount);
++-	} else {
++-		I802_DEBUG_INC(local->dot11FailedCount);
++-	}
++-}
++-EXPORT_SYMBOL(ieee80211_tx_status_noskb);
++-
++ void ieee80211_tx_monitor(struct ieee80211_local *local, struct sk_buff *skb,
++ 			  struct ieee80211_supported_band *sband,
++ 			  int retry_count, int shift, bool send_to_cooked)
++@@ -973,6 +915,64 @@ void ieee80211_tx_status(struct ieee8021
++ }
++ EXPORT_SYMBOL(ieee80211_tx_status);
++ 
+++void ieee80211_tx_status_noskb(struct ieee80211_hw *hw,
+++			       struct ieee80211_sta *pubsta,
+++			       struct ieee80211_tx_info *info)
+++{
+++	struct ieee80211_local *local = hw_to_local(hw);
+++	struct ieee80211_supported_band *sband;
+++	struct ieee80211_tx_status status = {};
+++	int retry_count;
+++	bool acked, noack_success;
+++
+++	ieee80211_tx_get_rates(hw, info, &retry_count);
+++
+++	sband = hw->wiphy->bands[info->band];
+++
+++	acked = !!(info->flags & IEEE80211_TX_STAT_ACK);
+++	noack_success = !!(info->flags & IEEE80211_TX_STAT_NOACK_TRANSMITTED);
+++
+++	if (pubsta) {
+++		struct sta_info *sta;
+++
+++		sta = container_of(pubsta, struct sta_info, sta);
+++
+++		if (!acked)
+++			sta->status_stats.retry_failed++;
+++		sta->status_stats.retry_count += retry_count;
+++
+++		if (acked) {
+++			sta->status_stats.last_ack = jiffies;
+++
+++			if (sta->status_stats.lost_packets)
+++				sta->status_stats.lost_packets = 0;
+++
+++			/* Track when last TDLS packet was ACKed */
+++			if (test_sta_flag(sta, WLAN_STA_TDLS_PEER_AUTH))
+++				sta->status_stats.last_tdls_pkt_time = jiffies;
+++		} else {
+++			ieee80211_lost_packet(sta, info);
+++		}
+++
+++		status.sta = pubsta;
+++		status.info = info;
+++		rate_control_tx_status(local, sband, &status);
+++	}
+++
+++	if (acked || noack_success) {
+++		I802_DEBUG_INC(local->dot11TransmittedFrameCount);
+++		if (!pubsta)
+++			I802_DEBUG_INC(local->dot11MulticastTransmittedFrameCount);
+++		if (retry_count > 0)
+++			I802_DEBUG_INC(local->dot11RetryCount);
+++		if (retry_count > 1)
+++			I802_DEBUG_INC(local->dot11MultipleRetryCount);
+++	} else {
+++		I802_DEBUG_INC(local->dot11FailedCount);
+++	}
+++}
+++EXPORT_SYMBOL(ieee80211_tx_status_noskb);
+++
++ void ieee80211_report_low_ack(struct ieee80211_sta *pubsta, u32 num_packets)
++ {
++ 	struct sta_info *sta = container_of(pubsta, struct sta_info, sta);
+Index: lede/package/kernel/mac80211/patches/9955-mac80211-add-ieee80211_tx_status_ext.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9955-mac80211-add-ieee80211_tx_status_ext.patch
+@@ -0,0 +1,201 @@
++--- a/include/net/mac80211.h
+++++ b/include/net/mac80211.h
++@@ -4251,6 +4251,23 @@ void ieee80211_tx_status(struct ieee8021
++ 			 struct sk_buff *skb);
++ 
++ /**
+++ * ieee80211_tx_status_ext - extended transmit status callback
+++ *
+++ * This function can be used as a replacement for ieee80211_tx_status
+++ * in drivers that may want to provide extra information that does not
+++ * fit into &struct ieee80211_tx_info.
+++ *
+++ * Calls to this function for a single hardware must be synchronized
+++ * against each other. Calls to this function, ieee80211_tx_status_ni()
+++ * and ieee80211_tx_status_irqsafe() may not be mixed for a single hardware.
+++ *
+++ * @hw: the hardware the frame was transmitted by
+++ * @status: tx status information
+++ */
+++void ieee80211_tx_status_ext(struct ieee80211_hw *hw,
+++			     struct ieee80211_tx_status *status);
+++
+++/**
++  * ieee80211_tx_status_noskb - transmit status callback without skb
++  *
++  * This function can be used as a replacement for ieee80211_tx_status
++@@ -4266,9 +4283,16 @@ void ieee80211_tx_status(struct ieee8021
++  *	(NULL for multicast packets)
++  * @info: tx status information
++  */
++-void ieee80211_tx_status_noskb(struct ieee80211_hw *hw,
++-			       struct ieee80211_sta *sta,
++-			       struct ieee80211_tx_info *info);
+++static inline void ieee80211_tx_status_noskb(struct ieee80211_hw *hw,
+++					     struct ieee80211_sta *sta,
+++					     struct ieee80211_tx_info *info)
+++{
+++	struct ieee80211_tx_status status = {};
+++
+++	status.sta = sta;
+++	status.info = info;
+++	ieee80211_tx_status_ext(hw, &status);
+++}
++ 
++ /**
++  * ieee80211_tx_status_ni - transmit status callback (in process context)
++--- a/net/mac80211/status.c
+++++ b/net/mac80211/status.c
++@@ -702,16 +702,16 @@ void ieee80211_tx_monitor(struct ieee802
++ 	dev_kfree_skb(skb);
++ }
++ 
++-void ieee80211_tx_status(struct ieee80211_hw *hw, struct sk_buff *skb)
+++static void __ieee80211_tx_status(struct ieee80211_hw *hw,
+++				  struct ieee80211_tx_status *status)
++ {
+++	struct sk_buff *skb = status->skb;
++ 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
++ 	struct ieee80211_local *local = hw_to_local(hw);
++-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++-	struct ieee80211_tx_status status = {};
+++	struct ieee80211_tx_info *info = status->info;
+++	struct sta_info *sta;
++ 	__le16 fc;
++ 	struct ieee80211_supported_band *sband;
++-	struct rhlist_head *tmp;
++-	struct sta_info *sta;
++ 	int retry_count;
++ 	int rates_idx;
++ 	bool send_to_cooked;
++@@ -722,16 +722,11 @@ void ieee80211_tx_status(struct ieee8021
++ 
++ 	rates_idx = ieee80211_tx_get_rates(hw, info, &retry_count);
++ 
++-	rcu_read_lock();
++-
++ 	sband = local->hw.wiphy->bands[info->band];
++ 	fc = hdr->frame_control;
++ 
++-	for_each_sta_info(local, hdr->addr1, sta, tmp) {
++-		/* skip wrong virtual interface */
++-		if (!ether_addr_equal(hdr->addr2, sta->sdata->vif.addr))
++-			continue;
++-
+++	if (status->sta) {
+++		sta = container_of(status->sta, struct sta_info, sta);
++ 		shift = ieee80211_vif_get_shift(&sta->sdata->vif);
++ 
++ 		if (info->flags & IEEE80211_TX_STATUS_EOSP)
++@@ -751,7 +746,6 @@ void ieee80211_tx_status(struct ieee8021
++ 			 * that this TX packet failed because of that.
++ 			 */
++ 			ieee80211_handle_filtered_frame(local, sta, skb);
++-			rcu_read_unlock();
++ 			return;
++ 		}
++ 
++@@ -801,7 +795,6 @@ void ieee80211_tx_status(struct ieee8021
++ 
++ 		if (info->flags & IEEE80211_TX_STAT_TX_FILTERED) {
++ 			ieee80211_handle_filtered_frame(local, sta, skb);
++-			rcu_read_unlock();
++ 			return;
++ 		} else {
++ 			if (!acked)
++@@ -817,10 +810,7 @@ void ieee80211_tx_status(struct ieee8021
++ 			}
++ 		}
++ 
++-		status.sta = &sta->sta;
++-		status.skb = skb;
++-		status.info = info;
++-		rate_control_tx_status(local, sband, &status);
+++		rate_control_tx_status(local, sband, status);
++ 		if (ieee80211_vif_is_mesh(&sta->sdata->vif))
++ 			ieee80211s_update_metric(local, sta, skb);
++ 
++@@ -847,8 +837,6 @@ void ieee80211_tx_status(struct ieee8021
++ 		}
++ 	}
++ 
++-	rcu_read_unlock();
++-
++ 	ieee80211_led_tx(local);
++ 
++ 	/* SNMP counters
++@@ -913,18 +901,50 @@ void ieee80211_tx_status(struct ieee8021
++ 	/* send to monitor interfaces */
++ 	ieee80211_tx_monitor(local, skb, sband, retry_count, shift, send_to_cooked);
++ }
+++
+++void ieee80211_tx_status(struct ieee80211_hw *hw, struct sk_buff *skb)
+++{
+++	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
+++	struct ieee80211_local *local = hw_to_local(hw);
+++	struct ieee80211_tx_status status = {};
+++	struct rhlist_head *tmp;
+++	struct sta_info *sta;
+++
+++	status.skb = skb;
+++	status.info = IEEE80211_SKB_CB(skb);
+++
+++	rcu_read_lock();
+++
+++	for_each_sta_info(local, hdr->addr1, sta, tmp) {
+++		/* skip wrong virtual interface */
+++		if (!ether_addr_equal(hdr->addr2, sta->sdata->vif.addr))
+++			continue;
+++
+++		status.sta = &sta->sta;
+++		break;
+++	}
+++
+++	__ieee80211_tx_status(hw, &status);
+++	rcu_read_unlock();
+++}
++ EXPORT_SYMBOL(ieee80211_tx_status);
++ 
++-void ieee80211_tx_status_noskb(struct ieee80211_hw *hw,
++-			       struct ieee80211_sta *pubsta,
++-			       struct ieee80211_tx_info *info)
+++void ieee80211_tx_status_ext(struct ieee80211_hw *hw,
+++			     struct ieee80211_tx_status *status)
++ {
++ 	struct ieee80211_local *local = hw_to_local(hw);
+++	struct ieee80211_tx_info *info = status->info;
+++	struct ieee80211_sta *pubsta = status->sta;
++ 	struct ieee80211_supported_band *sband;
++-	struct ieee80211_tx_status status = {};
++ 	int retry_count;
++ 	bool acked, noack_success;
++ 
+++	if (status->skb)
+++		return __ieee80211_tx_status(hw, status);
+++
+++	if (!status->sta)
+++		return;
+++
++ 	ieee80211_tx_get_rates(hw, info, &retry_count);
++ 
++ 	sband = hw->wiphy->bands[info->band];
++@@ -954,9 +974,7 @@ void ieee80211_tx_status_noskb(struct ie
++ 			ieee80211_lost_packet(sta, info);
++ 		}
++ 
++-		status.sta = pubsta;
++-		status.info = info;
++-		rate_control_tx_status(local, sband, &status);
+++		rate_control_tx_status(local, sband, status);
++ 	}
++ 
++ 	if (acked || noack_success) {
++@@ -971,7 +989,7 @@ void ieee80211_tx_status_noskb(struct ie
++ 		I802_DEBUG_INC(local->dot11FailedCount);
++ 	}
++ }
++-EXPORT_SYMBOL(ieee80211_tx_status_noskb);
+++EXPORT_SYMBOL(ieee80211_tx_status_ext);
++ 
++ void ieee80211_report_low_ack(struct ieee80211_sta *pubsta, u32 num_packets)
++ {
+Index: lede/package/kernel/mac80211/patches/9956-mac80211-add-txpower_to_tx_status_ext.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9956-mac80211-add-txpower_to_tx_status_ext.patch
+@@ -0,0 +1,16 @@
++--- a/include/net/mac80211.h
+++++ b/include/net/mac80211.h
++@@ -953,11 +953,13 @@ struct ieee80211_tx_info {
++  * @sta: Station that the packet was transmitted for
++  * @info: Basic tx status information
++  * @skb: Packet skb (can be NULL if not provided by the driver)
+++ * @txpower: Txpower per rate status information
++  */
++ struct ieee80211_tx_status {
++ 	struct ieee80211_sta *sta;
++ 	struct ieee80211_tx_info *info;
++ 	struct sk_buff *skb;
+++	s8 txpower[IEEE80211_TX_MAX_RATES];
++ };
++ 
++ /**
+Index: lede/package/kernel/mac80211/patches/9957-mac80211_move_flag_IEEE80211_TX_CTL_FIRST_FRAGMENT.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9957-mac80211_move_flag_IEEE80211_TX_CTL_FIRST_FRAGMENT.patch
+@@ -0,0 +1,279 @@
++--- a/drivers/net/wireless/ath/ath10k/mac.h
+++++ b/drivers/net/wireless/ath/ath10k/mac.h
++@@ -99,7 +99,7 @@ static inline void ath10k_tx_h_seq_no(st
++ 		if (arvif->tx_seq_no == 0)
++ 			arvif->tx_seq_no = 0x1000;
++ 
++-		if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++		if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 			arvif->tx_seq_no += 0x10;
++ 		hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
++ 		hdr->seq_ctrl |= cpu_to_le16(arvif->tx_seq_no);
++--- a/drivers/net/wireless/ath/ath9k/xmit.c
+++++ b/drivers/net/wireless/ath/ath9k/xmit.c
++@@ -2317,7 +2317,7 @@ void ath_assign_seq(struct ath_common *c
++ 
++ 	avp = (struct ath_vif *)vif->drv_priv;
++ 
++-	if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++	if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 		avp->seq_no += 0x10;
++ 
++ 	hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
++--- a/drivers/net/wireless/broadcom/b43/xmit.c
+++++ b/drivers/net/wireless/broadcom/b43/xmit.c
++@@ -414,7 +414,7 @@ int b43_generate_txhdr(struct b43_wldev
++ 	/* use hardware sequence counter as the non-TID counter */
++ 	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ)
++ 		mac_ctl |= B43_TXH_MAC_HWSEQ;
++-	if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++	if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 		mac_ctl |= B43_TXH_MAC_STMSDU;
++ 	if (!phy->gmode)
++ 		mac_ctl |= B43_TXH_MAC_5GHZ;
++--- a/drivers/net/wireless/broadcom/b43legacy/xmit.c
+++++ b/drivers/net/wireless/broadcom/b43legacy/xmit.c
++@@ -285,7 +285,7 @@ static int generate_txhdr_fw3(struct b43
++ 		mac_ctl |= B43legacy_TX4_MAC_ACK;
++ 	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ)
++ 		mac_ctl |= B43legacy_TX4_MAC_HWSEQ;
++-	if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++	if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 		mac_ctl |= B43legacy_TX4_MAC_STMSDU;
++ 	if (rate_fb_ofdm)
++ 		mac_ctl |= B43legacy_TX4_MAC_FALLBACKOFDM;
++--- a/drivers/net/wireless/broadcom/brcm80211/brcmsmac/main.c
+++++ b/drivers/net/wireless/broadcom/brcm80211/brcmsmac/main.c
++@@ -6282,7 +6282,7 @@ brcms_c_d11hdrs_mac80211(struct brcms_c_
++ 			frameid = bcmc_fid_generate(wlc, NULL, txh);
++ 		} else {
++ 			/* Increment the counter for first fragment */
++-			if (tx_info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++			if (tx_info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 				scb->seqnum[p->priority]++;
++ 
++ 			/* extract fragment number from frame first */
++--- a/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
+++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
++@@ -335,7 +335,7 @@ static void rt2x00queue_create_tx_descri
++ 	}
++ 
++ 	if (test_bit(CONFIG_HT_DISABLED, &rt2x00dev->flags)) {
++-		if (!(tx_info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT))
+++		if (!(tx_info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT))
++ 			txdesc->u.ht.txop = TXOP_SIFS;
++ 		else
++ 			txdesc->u.ht.txop = TXOP_BACKOFF;
++@@ -383,7 +383,7 @@ static void rt2x00queue_create_tx_descri
++ 	if (ieee80211_is_mgmt(hdr->frame_control) &&
++ 	    !ieee80211_is_beacon(hdr->frame_control))
++ 		txdesc->u.ht.txop = TXOP_BACKOFF;
++-	else if (!(tx_info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT))
+++	else if (!(tx_info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT))
++ 		txdesc->u.ht.txop = TXOP_SIFS;
++ 	else
++ 		txdesc->u.ht.txop = TXOP_HTTXOP;
++@@ -458,7 +458,7 @@ static void rt2x00queue_create_tx_descri
++ 	    ieee80211_is_probe_resp(hdr->frame_control))
++ 		__set_bit(ENTRY_TXD_REQ_TIMESTAMP, &txdesc->flags);
++ 
++-	if ((tx_info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT) &&
+++	if ((tx_info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT) &&
++ 	    !test_bit(ENTRY_TXD_RTS_FRAME, &txdesc->flags))
++ 		__set_bit(ENTRY_TXD_FIRST_FRAGMENT, &txdesc->flags);
++ 
++--- a/drivers/net/wireless/realtek/rtl818x/rtl8180/dev.c
+++++ b/drivers/net/wireless/realtek/rtl818x/rtl8180/dev.c
++@@ -535,7 +535,7 @@ static void rtl8180_tx(struct ieee80211_
++ 	spin_lock_irqsave(&priv->lock, flags);
++ 
++ 	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) {
++-		if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++		if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 			priv->seqno += 0x10;
++ 		hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
++ 		hdr->seq_ctrl |= cpu_to_le16(priv->seqno);
++--- a/drivers/net/wireless/realtek/rtl818x/rtl8187/dev.c
+++++ b/drivers/net/wireless/realtek/rtl818x/rtl8187/dev.c
++@@ -271,7 +271,7 @@ static void rtl8187_tx(struct ieee80211_
++ 	}
++ 
++ 	if (info->flags & IEEE80211_TX_CTL_ASSIGN_SEQ) {
++-		if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++		if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 			priv->seqno += 0x10;
++ 		tx_hdr->seq_ctrl &= cpu_to_le16(IEEE80211_SCTL_FRAG);
++ 		tx_hdr->seq_ctrl |= cpu_to_le16(priv->seqno);
++--- a/drivers/net/wireless/zydas/zd1211rw/zd_mac.c
+++++ b/drivers/net/wireless/zydas/zd1211rw/zd_mac.c
++@@ -666,7 +666,7 @@ static void cs_set_control(struct zd_mac
++ 	cs->control = 0;
++ 
++ 	/* First fragment */
++-	if (info->flags & IEEE80211_TX_CTL_FIRST_FRAGMENT)
+++	if (info->control.flags & IEEE80211_TX_CTRL_FIRST_FRAGMENT)
++ 		cs->control |= ZD_CS_NEED_RANDOM_BACKOFF;
++ 
++ 	/* No ACK expected (multicast, etc.) */
++--- a/include/net/mac80211.h
+++++ b/include/net/mac80211.h
++@@ -578,7 +578,7 @@ struct ieee80211_bss_conf {
++  * @IEEE80211_TX_CTL_ASSIGN_SEQ: The driver has to assign a sequence
++  *	number to this frame, taking care of not overwriting the fragment
++  *	number and increasing the sequence number only when the
++- *	IEEE80211_TX_CTL_FIRST_FRAGMENT flag is set. mac80211 will properly
+++ *	IEEE80211_TX_CTRL_FIRST_FRAGMENT flag is set. mac80211 will properly
++  *	assign sequence numbers to QoS-data frames but cannot do so correctly
++  *	for non-QoS-data and management frames because beacons need them from
++  *	that counter as well and mac80211 cannot guarantee proper sequencing.
++@@ -589,7 +589,6 @@ struct ieee80211_bss_conf {
++  * @IEEE80211_TX_CTL_NO_ACK: tell the low level not to wait for an ack
++  * @IEEE80211_TX_CTL_CLEAR_PS_FILT: clear powersave filter for destination
++  *	station
++- * @IEEE80211_TX_CTL_FIRST_FRAGMENT: this is a first fragment of the frame
++  * @IEEE80211_TX_CTL_SEND_AFTER_DTIM: send this frame after DTIM beacon
++  * @IEEE80211_TX_CTL_AMPDU: this frame should be sent as part of an A-MPDU
++  * @IEEE80211_TX_CTL_INJECTED: Frame was injected, internal to mac80211.
++@@ -674,36 +673,35 @@ enum mac80211_tx_info_flags {
++ 	IEEE80211_TX_CTL_ASSIGN_SEQ		= BIT(1),
++ 	IEEE80211_TX_CTL_NO_ACK			= BIT(2),
++ 	IEEE80211_TX_CTL_CLEAR_PS_FILT		= BIT(3),
++-	IEEE80211_TX_CTL_FIRST_FRAGMENT		= BIT(4),
++-	IEEE80211_TX_CTL_SEND_AFTER_DTIM	= BIT(5),
++-	IEEE80211_TX_CTL_AMPDU			= BIT(6),
++-	IEEE80211_TX_CTL_INJECTED		= BIT(7),
++-	IEEE80211_TX_STAT_TX_FILTERED		= BIT(8),
++-	IEEE80211_TX_STAT_ACK			= BIT(9),
++-	IEEE80211_TX_STAT_AMPDU			= BIT(10),
++-	IEEE80211_TX_STAT_AMPDU_NO_BACK		= BIT(11),
++-	IEEE80211_TX_CTL_RATE_CTRL_PROBE	= BIT(12),
++-	IEEE80211_TX_INTFL_OFFCHAN_TX_OK	= BIT(13),
++-	IEEE80211_TX_INTFL_NEED_TXPROCESSING	= BIT(14),
++-	IEEE80211_TX_INTFL_RETRIED		= BIT(15),
++-	IEEE80211_TX_INTFL_DONT_ENCRYPT		= BIT(16),
++-	IEEE80211_TX_CTL_NO_PS_BUFFER		= BIT(17),
++-	IEEE80211_TX_CTL_MORE_FRAMES		= BIT(18),
++-	IEEE80211_TX_INTFL_RETRANSMISSION	= BIT(19),
++-	IEEE80211_TX_INTFL_MLME_CONN_TX		= BIT(20),
++-	IEEE80211_TX_INTFL_NL80211_FRAME_TX	= BIT(21),
++-	IEEE80211_TX_CTL_LDPC			= BIT(22),
++-	IEEE80211_TX_CTL_STBC			= BIT(23) | BIT(24),
++-	IEEE80211_TX_CTL_TX_OFFCHAN		= BIT(25),
++-	IEEE80211_TX_INTFL_TKIP_MIC_FAILURE	= BIT(26),
++-	IEEE80211_TX_CTL_NO_CCK_RATE		= BIT(27),
++-	IEEE80211_TX_STATUS_EOSP		= BIT(28),
++-	IEEE80211_TX_CTL_USE_MINRATE		= BIT(29),
++-	IEEE80211_TX_CTL_DONTFRAG		= BIT(30),
++-	IEEE80211_TX_STAT_NOACK_TRANSMITTED	= BIT(31),
+++	IEEE80211_TX_CTL_SEND_AFTER_DTIM	= BIT(4),
+++	IEEE80211_TX_CTL_AMPDU			= BIT(5),
+++	IEEE80211_TX_CTL_INJECTED		= BIT(6),
+++	IEEE80211_TX_STAT_TX_FILTERED		= BIT(7),
+++	IEEE80211_TX_STAT_ACK			= BIT(8),
+++	IEEE80211_TX_STAT_AMPDU			= BIT(9),
+++	IEEE80211_TX_STAT_AMPDU_NO_BACK		= BIT(10),
+++	IEEE80211_TX_CTL_RATE_CTRL_PROBE	= BIT(11),
+++	IEEE80211_TX_INTFL_OFFCHAN_TX_OK	= BIT(12),
+++	IEEE80211_TX_INTFL_NEED_TXPROCESSING	= BIT(13),
+++	IEEE80211_TX_INTFL_RETRIED		= BIT(14),
+++	IEEE80211_TX_INTFL_DONT_ENCRYPT		= BIT(15),
+++	IEEE80211_TX_CTL_NO_PS_BUFFER		= BIT(16),
+++	IEEE80211_TX_CTL_MORE_FRAMES		= BIT(17),
+++	IEEE80211_TX_INTFL_RETRANSMISSION	= BIT(18),
+++	IEEE80211_TX_INTFL_MLME_CONN_TX		= BIT(19),
+++	IEEE80211_TX_INTFL_NL80211_FRAME_TX	= BIT(20),
+++	IEEE80211_TX_CTL_LDPC			= BIT(21),
+++	IEEE80211_TX_CTL_STBC			= BIT(22) | BIT(23),
+++	IEEE80211_TX_CTL_TX_OFFCHAN		= BIT(24),
+++	IEEE80211_TX_INTFL_TKIP_MIC_FAILURE	= BIT(25),
+++	IEEE80211_TX_CTL_NO_CCK_RATE		= BIT(26),
+++	IEEE80211_TX_STATUS_EOSP		= BIT(27),
+++	IEEE80211_TX_CTL_USE_MINRATE		= BIT(28),
+++	IEEE80211_TX_CTL_DONTFRAG		= BIT(29),
+++	IEEE80211_TX_STAT_NOACK_TRANSMITTED	= BIT(30),
++ };
++ 
++-#define IEEE80211_TX_CTL_STBC_SHIFT		23
+++#define IEEE80211_TX_CTL_STBC_SHIFT		22
++ 
++ /**
++  * enum mac80211_tx_control_flags - flags to describe transmit control
++@@ -715,6 +713,7 @@ enum mac80211_tx_info_flags {
++  * @IEEE80211_TX_CTRL_RATE_INJECT: This frame is injected with rate information
++  * @IEEE80211_TX_CTRL_AMSDU: This frame is an A-MSDU frame
++  * @IEEE80211_TX_CTRL_FAST_XMIT: This frame is going through the fast_xmit path
+++ * @IEEE80211_TX_CTRL_FIRST_FRAGMENT: this is a first fragment of the frame
++  *
++  * These flags are used in tx_info->control.flags.
++  */
++@@ -724,6 +723,7 @@ enum mac80211_tx_control_flags {
++ 	IEEE80211_TX_CTRL_RATE_INJECT		= BIT(2),
++ 	IEEE80211_TX_CTRL_AMSDU			= BIT(3),
++ 	IEEE80211_TX_CTRL_FAST_XMIT		= BIT(4),
+++	IEEE80211_TX_CTRL_FIRST_FRAGMENT        = BIT(5),
++ };
++ 
++ /*
++@@ -731,13 +731,13 @@ enum mac80211_tx_control_flags {
++  * set by the tx handlers for each transmission attempt by the mac80211 stack.
++  */
++ #define IEEE80211_TX_TEMPORARY_FLAGS (IEEE80211_TX_CTL_NO_ACK |		      \
++-	IEEE80211_TX_CTL_CLEAR_PS_FILT | IEEE80211_TX_CTL_FIRST_FRAGMENT |    \
+++	IEEE80211_TX_CTL_CLEAR_PS_FILT | IEEE80211_TX_STATUS_EOSP |	      \
++ 	IEEE80211_TX_CTL_SEND_AFTER_DTIM | IEEE80211_TX_CTL_AMPDU |	      \
++ 	IEEE80211_TX_STAT_TX_FILTERED |	IEEE80211_TX_STAT_ACK |		      \
++ 	IEEE80211_TX_STAT_AMPDU | IEEE80211_TX_STAT_AMPDU_NO_BACK |	      \
++ 	IEEE80211_TX_CTL_RATE_CTRL_PROBE | IEEE80211_TX_CTL_NO_PS_BUFFER |    \
++ 	IEEE80211_TX_CTL_MORE_FRAMES | IEEE80211_TX_CTL_LDPC |		      \
++-	IEEE80211_TX_CTL_STBC | IEEE80211_TX_STATUS_EOSP)
+++	IEEE80211_TX_CTL_STBC)
++ 
++ /**
++  * enum mac80211_rate_control_flags - per-rate flags set by the
++--- a/net/mac80211/tx.c
+++++ b/net/mac80211/tx.c
++@@ -896,8 +896,8 @@ static int ieee80211_fragment(struct iee
++ 		memcpy(tmp->cb, skb->cb, sizeof(tmp->cb));
++ 
++ 		info = IEEE80211_SKB_CB(tmp);
++-		info->flags &= ~(IEEE80211_TX_CTL_CLEAR_PS_FILT |
++-				 IEEE80211_TX_CTL_FIRST_FRAGMENT);
+++		info->flags &= ~IEEE80211_TX_CTL_CLEAR_PS_FILT;
+++		info->control.flags &= ~IEEE80211_TX_CTRL_FIRST_FRAGMENT;
++ 
++ 		if (rem)
++ 			info->flags |= IEEE80211_TX_CTL_MORE_FRAMES;
++@@ -1236,7 +1236,7 @@ ieee80211_tx_prepare(struct ieee80211_su
++ 		ieee80211_check_fast_xmit(tx->sta);
++ 	}
++ 
++-	info->flags |= IEEE80211_TX_CTL_FIRST_FRAGMENT;
+++	info->control.flags |= IEEE80211_TX_CTRL_FIRST_FRAGMENT;
++ 
++ 	return TX_CONTINUE;
++ }
++@@ -3362,10 +3362,10 @@ static bool ieee80211_xmit_fast(struct i
++ 	memset(info, 0, sizeof(*info));
++ 	info->band = fast_tx->band;
++ 	info->control.vif = &sdata->vif;
++-	info->flags = IEEE80211_TX_CTL_FIRST_FRAGMENT |
++-		      IEEE80211_TX_CTL_DONTFRAG |
+++	info->flags = IEEE80211_TX_CTL_DONTFRAG |
++ 		      (tid_tx ? IEEE80211_TX_CTL_AMPDU : 0);
++-	info->control.flags = IEEE80211_TX_CTRL_FAST_XMIT;
+++	info->control.flags = IEEE80211_TX_CTRL_FAST_XMIT |
+++			      IEEE80211_TX_CTRL_FIRST_FRAGMENT;
++ 
++ 	if (hdr->frame_control & cpu_to_le16(IEEE80211_STYPE_QOS_DATA)) {
++ 		tid = skb->priority & IEEE80211_QOS_CTL_TAG1D_MASK;
++@@ -4270,8 +4270,8 @@ __ieee80211_beacon_get(struct ieee80211_
++ 	info->control.vif = vif;
++ 
++ 	info->flags |= IEEE80211_TX_CTL_CLEAR_PS_FILT |
++-			IEEE80211_TX_CTL_ASSIGN_SEQ |
++-			IEEE80211_TX_CTL_FIRST_FRAGMENT;
+++			IEEE80211_TX_CTL_ASSIGN_SEQ;
+++	info->control.flags |= IEEE80211_TX_CTRL_FIRST_FRAGMENT;
++  out:
++ 	rcu_read_unlock();
++ 	return skb;
+Index: lede/package/kernel/mac80211/patches/9958-mac80211_add_new_flag_IEEE80211_TX_CTL_TPC_PROBE.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9958-mac80211_add_new_flag_IEEE80211_TX_CTL_TPC_PROBE.patch
+@@ -0,0 +1,28 @@
++--- a/include/net/mac80211.h
+++++ b/include/net/mac80211.h
++@@ -664,6 +664,8 @@ struct ieee80211_bss_conf {
++  *	any errors (like issues specific to the driver/HW).
++  *	This flag must not be set for frames that don't request no-ack
++  *	behaviour with IEEE80211_TX_CTL_NO_ACK.
+++ * @IEEE80211_TX_CTL_TPC_PROBE: internal to mac80211, can be set by
+++ *	transmit power control algorithms to indicate a tpc probe.
++  *
++  * Note: If you have to add new flags to the enumeration, then don't
++  *	 forget to update %IEEE80211_TX_TEMPORARY_FLAGS when necessary.
++@@ -699,6 +701,7 @@ enum mac80211_tx_info_flags {
++ 	IEEE80211_TX_CTL_USE_MINRATE		= BIT(28),
++ 	IEEE80211_TX_CTL_DONTFRAG		= BIT(29),
++ 	IEEE80211_TX_STAT_NOACK_TRANSMITTED	= BIT(30),
+++	IEEE80211_TX_CTL_TPC_PROBE		= BIT(31),
++ };
++ 
++ #define IEEE80211_TX_CTL_STBC_SHIFT		22
++@@ -737,7 +740,7 @@ enum mac80211_tx_control_flags {
++ 	IEEE80211_TX_STAT_AMPDU | IEEE80211_TX_STAT_AMPDU_NO_BACK |	      \
++ 	IEEE80211_TX_CTL_RATE_CTRL_PROBE | IEEE80211_TX_CTL_NO_PS_BUFFER |    \
++ 	IEEE80211_TX_CTL_MORE_FRAMES | IEEE80211_TX_CTL_LDPC |		      \
++-	IEEE80211_TX_CTL_STBC)
+++	IEEE80211_TX_CTL_STBC | IEEE80211_TX_CTL_TPC_PROBE)
++ 
++ /**
++  * enum mac80211_rate_control_flags - per-rate flags set by the
+Index: lede/package/kernel/mac80211/patches/9959-mac80211_set_txpower_for_mcast_and_management.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9959-mac80211_set_txpower_for_mcast_and_management.patch
+@@ -0,0 +1,12 @@
++--- a/net/mac80211/rate.c
+++++ b/net/mac80211/rate.c
++@@ -372,6 +372,9 @@ bool rate_control_send_low(struct ieee80
++ 					      txrc->bss_conf->basic_rates,
++ 					      sband);
++ 
+++		/* Send management & multicast packets at max user power */
+++		info->control.txpower = txrc->hw->conf.power_level;
+++
++ 		return true;
++ 	}
++ 	return false;
+Index: lede/package/kernel/mac80211/patches/9970-ath9k-add-sta_rate_tbl_update.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9970-ath9k-add-sta_rate_tbl_update.patch
+@@ -0,0 +1,57 @@
++--- a/drivers/net/wireless/ath/ath9k/xmit.c
+++++ b/drivers/net/wireless/ath/ath9k/xmit.c
++@@ -188,6 +188,41 @@ static void ath_send_bar(struct ath_atx_
++ 			   seqno << IEEE80211_SEQ_SEQ_SHIFT);
++ }
++ 
+++static bool ath_merge_ratetbl(struct ieee80211_sta *sta, struct ath_buf *bf,
+++			      struct ieee80211_tx_info *info)
+++{
+++	struct ieee80211_sta_rates *ratetbl;
+++	int i;
+++
+++	if (!sta)
+++		return false;
+++
+++	ratetbl = rcu_dereference(sta->rates);
+++	if (!ratetbl)
+++		return false;
+++
+++	if (likely(info->control.rates[0].idx < 0 ||
+++		   !info->control.rates[0].count)) {
+++		i = 0;
+++	} else {
+++		bf->rates[0] = info->control.rates[0];
+++		i = 1;
+++	}
+++
+++	for ( ; i < IEEE80211_TX_MAX_RATES; i++) {
+++		bf->rates[i].idx = ratetbl->rate[i].idx;
+++		bf->rates[i].flags = ratetbl->rate[i].flags;
+++		if (info->control.use_rts)
+++			bf->rates[i].count = ratetbl->rate[i].count_rts;
+++		else if (info->control.use_cts_prot)
+++			bf->rates[i].count = ratetbl->rate[i].count_cts;
+++		else
+++			bf->rates[i].count = ratetbl->rate[i].count;
+++	}
+++
+++	return true;
+++}
+++
++ static void ath_set_rates(struct ieee80211_vif *vif, struct ieee80211_sta *sta,
++ 			  struct ath_buf *bf, bool ps)
++ {
++@@ -199,8 +234,10 @@ static void ath_set_rates(struct ieee802
++ 		info->control.rates[0].count = 0;
++ 	}
++ 
++-	ieee80211_get_tx_rates(vif, sta, bf->bf_mpdu, bf->rates,
++-			       ARRAY_SIZE(bf->rates));
+++	if (!ath_merge_ratetbl(sta, bf, info))
+++		ieee80211_get_tx_rates(vif, sta, bf->bf_mpdu, bf->rates,
+++				       ARRAY_SIZE(bf->rates));
+++
++ 	if (!ps)
++ 		return;
++ 
+Index: lede/package/kernel/mac80211/patches/9971-ath9k-add-rate-txpower.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9971-ath9k-add-rate-txpower.patch
+@@ -0,0 +1,45 @@
++--- a/drivers/net/wireless/ath/ath9k/ath9k.h
+++++ b/drivers/net/wireless/ath/ath9k/ath9k.h
++@@ -228,6 +228,7 @@ struct ath_buf {
++ 	dma_addr_t bf_daddr;		/* physical addr of desc */
++ 	dma_addr_t bf_buf_addr;	/* physical addr of data buffer, for DMA */
++ 	struct ieee80211_tx_rate rates[4];
+++	s8 txpower[4];
++ 	struct ath_buf_state bf_state;
++ };
++ 
++--- a/drivers/net/wireless/ath/ath9k/xmit.c
+++++ b/drivers/net/wireless/ath/ath9k/xmit.c
++@@ -194,6 +194,9 @@ static bool ath_merge_ratetbl(struct iee
++ 	struct ieee80211_sta_rates *ratetbl;
++ 	int i;
++ 
+++	for (i = 0; i < ARRAY_SIZE(bf->txpower); i++)
+++		bf->txpower[i] = MAX_RATE_POWER;
+++
++ 	if (!sta)
++ 		return false;
++ 
++@@ -206,10 +209,12 @@ static bool ath_merge_ratetbl(struct iee
++ 		i = 0;
++ 	} else {
++ 		bf->rates[0] = info->control.rates[0];
+++		bf->txpower[0] = info->control.txpower * 2;
++ 		i = 1;
++ 	}
++ 
++ 	for ( ; i < IEEE80211_TX_MAX_RATES; i++) {
+++		bf->txpower[i] = ratetbl->rate[i].txpower * 2;
++ 		bf->rates[i].idx = ratetbl->rate[i].idx;
++ 		bf->rates[i].flags = ratetbl->rate[i].flags;
++ 		if (info->control.use_rts)
++@@ -1411,6 +1416,9 @@ static void ath_buf_set_rate(struct ath_
++ 							is_cck);
++ 	}
++ 
+++	for (i = 0; i < ARRAY_SIZE(bf->rates); i++)
+++		info->txpower[i] = min_t(u8, info->txpower[i], bf->txpower[i]);
+++
++ 	/* For AR5416 - RTS cannot be followed by a frame larger than 8K */
++ 	if (bf_isaggr(bf) && (len > sc->sc_ah->caps.rts_aggr_limit))
++ 		info->flags &= ~ATH9K_TXDESC_RTSENA;
+Index: lede/package/kernel/mac80211/patches/9972-ath9k_add_tpc_for_ack_packets.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9972-ath9k_add_tpc_for_ack_packets.patch
+@@ -0,0 +1,51 @@
++--- a/drivers/net/wireless/ath/ath9k/hw.c
+++++ b/drivers/net/wireless/ath/ath9k/hw.c
++@@ -3013,6 +3013,25 @@ void ath9k_hw_set_txpowerlimit(struct at
++ }
++ EXPORT_SYMBOL(ath9k_hw_set_txpowerlimit);
++ 
+++void ath9k_hw_set_ack_txpower(struct ath_hw *ah, s8 ack_txpower)
+++{
+++	struct ath_regulatory *reg = ath9k_hw_regulatory(ah);
+++	u32 tpc;
+++
+++	if (ack_txpower > MAX_RATE_POWER / 2)
+++		ack_txpower = MAX_RATE_POWER / 2;
+++	if (ack_txpower > reg->power_limit / 2)
+++		ack_txpower = reg->power_limit / 2;
+++
+++	tpc = REG_READ(ah, AR_TPC);
+++	tpc &= ~(AR_TPC_CHIRP | AR_TPC_CTS | AR_TPC_ACK);
+++	tpc |= SM(ack_txpower, AR_TPC_CHIRP) |
+++		SM(ack_txpower, AR_TPC_CTS) |
+++		SM(ack_txpower, AR_TPC_ACK);
+++	REG_WRITE(ah, AR_TPC, tpc);
+++}
+++EXPORT_SYMBOL(ath9k_hw_set_ack_txpower);
+++
++ void ath9k_hw_setopmode(struct ath_hw *ah)
++ {
++ 	ath9k_hw_set_operating_mode(ah, ah->opmode);
++--- a/drivers/net/wireless/ath/ath9k/hw.h
+++++ b/drivers/net/wireless/ath/ath9k/hw.h
++@@ -1058,6 +1058,7 @@ void ath9k_hw_setrxfilter(struct ath_hw
++ bool ath9k_hw_phy_disable(struct ath_hw *ah);
++ bool ath9k_hw_disable(struct ath_hw *ah);
++ void ath9k_hw_set_txpowerlimit(struct ath_hw *ah, u32 limit, bool test);
+++void ath9k_hw_set_ack_txpower(struct ath_hw *ah, s8 ack_txpower);
++ void ath9k_hw_setopmode(struct ath_hw *ah);
++ void ath9k_hw_setmcastfilter(struct ath_hw *ah, u32 filter0, u32 filter1);
++ void ath9k_hw_write_associd(struct ath_hw *ah);
++--- a/drivers/net/wireless/ath/ath9k/main.c
+++++ b/drivers/net/wireless/ath/ath9k/main.c
++@@ -1470,6 +1470,10 @@ static int ath9k_config(struct ieee80211
++ 		ath_chanctx_set_channel(sc, ctx, &hw->conf.chandef);
++ 	}
++ 
+++	/* Handle tx power changes for ACK packets*/
+++	if (changed & IEEE80211_CONF_CHANGE_ACK_TXPOWER)
+++		ath9k_hw_set_ack_txpower(ah, conf->ack_txpower);
+++
++ 	mutex_unlock(&sc->mutex);
++ 	ath9k_ps_restore(sc);
++ 
+Index: lede/package/kernel/mac80211/patches/9973-ath9k_enable_tpc.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9973-ath9k_enable_tpc.patch
+@@ -0,0 +1,30 @@
++--- a/drivers/net/wireless/ath/ath9k/hw.c
+++++ b/drivers/net/wireless/ath/ath9k/hw.c
++@@ -467,7 +467,7 @@ static void ath9k_hw_init_defaults(struc
++ 	ah->power_mode = ATH9K_PM_UNDEFINED;
++ 	ah->htc_reset_init = true;
++ 
++-	ah->tpc_enabled = false;
+++	ah->tpc_enabled = true;
++ 
++ 	ah->ani_function = ATH9K_ANI_ALL;
++ 	if (!AR_SREV_9300_20_OR_LATER(ah))
++--- a/drivers/net/wireless/ath/ath9k/init.c
+++++ b/drivers/net/wireless/ath/ath9k/init.c
++@@ -881,6 +881,8 @@ static void ath9k_set_hw_capab(struct at
++ 	ieee80211_hw_set(hw, HOST_BROADCAST_PS_BUFFERING);
++ 	ieee80211_hw_set(hw, SUPPORT_FAST_XMIT);
++ 	ieee80211_hw_set(hw, SUPPORTS_CLONED_SKBS);
+++	ieee80211_hw_set(hw, SUPPORTS_TPC_PER_MRR);
+++	ieee80211_hw_set(hw, SUPPORTS_TPC_FOR_ACK_PACKETS);
++ 
++ 	if (ath9k_ps_enable)
++ 		ieee80211_hw_set(hw, SUPPORTS_PS);
++@@ -934,6 +936,7 @@ static void ath9k_set_hw_capab(struct at
++ 	hw->max_rates = 4;
++ 	hw->max_listen_interval = 10;
++ 	hw->max_rate_tries = 10;
+++	hw->min_txpower = 0;
++ 	hw->sta_data_size = sizeof(struct ath_node);
++ 	hw->vif_data_size = sizeof(struct ath_vif);
++ 	hw->txq_data_size = sizeof(struct ath_atx_tid);
+Index: lede/package/kernel/mac80211/patches/9974-ath9k_fix_usage-of_txpower-limit_eeprom_readings.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9974-ath9k_fix_usage-of_txpower-limit_eeprom_readings.patch
+@@ -0,0 +1,11 @@
++--- a/drivers/net/wireless/ath/ath9k/xmit.c
+++++ b/drivers/net/wireless/ath/ath9k/xmit.c
++@@ -1297,7 +1297,7 @@ static u8 ath_get_rate_txpower(struct at
++ 		if (!max_power && !AR_SREV_9280_20_OR_LATER(ah))
++ 			max_power = 1;
++ 	} else if (!bf->bf_state.bfs_paprd) {
++-		if (rateidx < 8 && (info->flags & IEEE80211_TX_CTL_STBC))
+++		if (rateidx > 8 && (info->flags & IEEE80211_TX_CTL_STBC))
++ 			max_power = min_t(u8, ah->tx_power_stbc[rateidx],
++ 					  fi->tx_power);
++ 		else
+Index: lede/package/kernel/mac80211/patches/9975-ath5k-add-rate-txpower.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9975-ath5k-add-rate-txpower.patch
+@@ -0,0 +1,125 @@
++--- a/drivers/net/wireless/ath/ath5k/ath5k.h
+++++ b/drivers/net/wireless/ath/ath5k/ath5k.h
++@@ -1453,7 +1453,7 @@ struct ath5k_hw {
++ 	 */
++ 	int (*ah_setup_tx_desc)(struct ath5k_hw *, struct ath5k_desc *,
++ 		unsigned int, unsigned int, int, enum ath5k_pkt_type,
++-		unsigned int, unsigned int, unsigned int, unsigned int,
+++		s8, unsigned int, unsigned int, unsigned int,
++ 		unsigned int, unsigned int, unsigned int, unsigned int);
++ 	int (*ah_proc_tx_desc)(struct ath5k_hw *, struct ath5k_desc *,
++ 		struct ath5k_tx_status *);
++--- a/drivers/net/wireless/ath/ath5k/base.c
+++++ b/drivers/net/wireless/ath/ath5k/base.c
++@@ -741,6 +741,7 @@ ath5k_txbuf_setup(struct ath5k_hw *ah, s
++ 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
++ 	unsigned int pktlen, flags, keyidx = AR5K_TXKEYIX_INVALID;
++ 	struct ieee80211_rate *rate;
+++	struct ieee80211_sta_rates *ratetbl;
++ 	unsigned int mrr_rate[3], mrr_tries[3];
++ 	int i, ret;
++ 	u16 hw_rate;
++@@ -757,6 +758,8 @@ ath5k_txbuf_setup(struct ath5k_hw *ah, s
++ 	if (dma_mapping_error(ah->dev, bf->skbaddr))
++ 		return -ENOSPC;
++ 
+++	bf->txpower = AR5K_TUNE_MAX_TXPOWER;
+++
++ 	ieee80211_get_tx_rates(info->control.vif, (control) ? control->sta : NULL, skb, bf->rates,
++ 			       ARRAY_SIZE(bf->rates));
++ 
++@@ -774,6 +777,13 @@ ath5k_txbuf_setup(struct ath5k_hw *ah, s
++ 
++ 	hw_rate = ath5k_get_rate_hw_value(ah->hw, info, bf, 0);
++ 
+++	if (info->control.rates[0].idx >= 0) {
+++		bf->txpower = info->control.txpower * 2;
+++	} else {
+++		ratetbl = rcu_dereference(control->sta->rates);
+++		bf->txpower = ratetbl->rate[0].txpower * 2;
+++	}
+++
++ 	pktlen = skb->len;
++ 
++ 	/* FIXME: If we are in g mode and rate is a CCK rate
++@@ -799,7 +809,7 @@ ath5k_txbuf_setup(struct ath5k_hw *ah, s
++ 	ret = ah->ah_setup_tx_desc(ah, ds, pktlen,
++ 		ieee80211_get_hdrlen_from_skb(skb), padsize,
++ 		get_hw_packet_type(skb),
++-		(ah->ah_txpower.txp_requested * 2),
+++		bf->txpower,
++ 		hw_rate,
++ 		bf->rates[0].count, keyidx, ah->ah_tx_ant, flags,
++ 		cts_rate, duration);
++@@ -1819,6 +1829,7 @@ ath5k_beacon_setup(struct ath5k_hw *ah,
++ 	u8 antenna;
++ 	u32 flags;
++ 	const int padsize = 0;
+++	s8 txpower = ah->ah_txpower.txp_requested * 2;
++ 
++ 	bf->skbaddr = dma_map_single(ah->dev, skb->data, skb->len,
++ 			DMA_TO_DEVICE);
++@@ -1872,7 +1883,7 @@ ath5k_beacon_setup(struct ath5k_hw *ah,
++ 	ret = ah->ah_setup_tx_desc(ah, ds, skb->len,
++ 			ieee80211_get_hdrlen_from_skb(skb), padsize,
++ 			AR5K_PKT_TYPE_BEACON,
++-			(ah->ah_txpower.txp_requested * 2),
+++			txpower,
++ 			ieee80211_get_tx_rate(ah->hw, info)->hw_value,
++ 			1, AR5K_TXKEYIX_INVALID,
++ 			antenna, flags, 0, 0);
++--- a/drivers/net/wireless/ath/ath5k/base.h
+++++ b/drivers/net/wireless/ath/ath5k/base.h
++@@ -68,6 +68,7 @@ struct ath5k_buf {
++ 	struct sk_buff			*skb;		/* skbuff for buf */
++ 	dma_addr_t			skbaddr;	/* physical addr of skb data */
++ 	struct ieee80211_tx_rate	rates[4];	/* number of multi-rate stages */
+++	s8 txpower;					/* txpower per packet */
++ };
++ 
++ struct ath5k_vif {
++--- a/drivers/net/wireless/ath/ath5k/desc.c
+++++ b/drivers/net/wireless/ath/ath5k/desc.c
++@@ -77,7 +77,7 @@ ath5k_hw_setup_2word_tx_desc(struct ath5
++ 			unsigned int pkt_len, unsigned int hdr_len,
++ 			int padsize,
++ 			enum ath5k_pkt_type type,
++-			unsigned int tx_power,
+++			s8 txpower,
++ 			unsigned int tx_rate0, unsigned int tx_tries0,
++ 			unsigned int key_index,
++ 			unsigned int antenna_mode,
++@@ -243,7 +243,7 @@ ath5k_hw_setup_4word_tx_desc(struct ath5
++ 			unsigned int pkt_len, unsigned int hdr_len,
++ 			int padsize,
++ 			enum ath5k_pkt_type type,
++-			unsigned int tx_power,
+++			s8 txpower,
++ 			unsigned int tx_rate0, unsigned int tx_tries0,
++ 			unsigned int key_index,
++ 			unsigned int antenna_mode,
++@@ -278,9 +278,12 @@ ath5k_hw_setup_4word_tx_desc(struct ath5
++ 		return -EINVAL;
++ 	}
++ 
++-	tx_power += ah->ah_txpower.txp_offset;
++-	if (tx_power > AR5K_TUNE_MAX_TXPOWER)
++-		tx_power = AR5K_TUNE_MAX_TXPOWER;
+++	if (txpower > ah->ah_txpower.txp_requested)
+++		txpower = ah->ah_txpower.txp_requested;
+++	txpower *= 2;
+++	txpower += ah->ah_txpower.txp_offset;
+++	if (txpower > AR5K_TUNE_MAX_TXPOWER)
+++		txpower = AR5K_TUNE_MAX_TXPOWER;
++ 
++ 	/* Clear descriptor status area */
++ 	memset(&desc->ud.ds_tx5212.tx_stat, 0,
++@@ -309,7 +312,7 @@ ath5k_hw_setup_4word_tx_desc(struct ath5
++ 
++ 	txctl1 = pkt_len & AR5K_4W_TX_DESC_CTL1_BUF_LEN;
++ 
++-	txctl0 |= AR5K_REG_SM(tx_power, AR5K_4W_TX_DESC_CTL0_XMIT_POWER) |
+++	txctl0 |= AR5K_REG_SM(txpower, AR5K_4W_TX_DESC_CTL0_XMIT_POWER) |
++ 		  AR5K_REG_SM(antenna_mode, AR5K_4W_TX_DESC_CTL0_ANT_MODE_XMIT);
++ 	txctl1 |= AR5K_REG_SM(type, AR5K_4W_TX_DESC_CTL1_FRAME_TYPE);
++ 	txctl2 = AR5K_REG_SM(tx_tries0, AR5K_4W_TX_DESC_CTL2_XMIT_TRIES0);
+Index: lede/package/kernel/mac80211/patches/9976-ath5k_add_tpc_for_ack_packets.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9976-ath5k_add_tpc_for_ack_packets.patch
+@@ -0,0 +1,66 @@
++--- a/drivers/net/wireless/ath/ath5k/ath5k.h
+++++ b/drivers/net/wireless/ath/ath5k/ath5k.h
++@@ -1632,6 +1632,8 @@ void ath5k_hw_set_antenna_mode(struct at
++ void ath5k_hw_set_antenna_switch(struct ath5k_hw *ah, u8 ee_mode);
++ /* TX power setup */
++ int ath5k_hw_set_txpower_limit(struct ath5k_hw *ah, u8 txpower);
+++/* ACK packets tx power setup */
+++void ath5k_hw_set_ack_txpower(struct ath5k_hw *ah, s8 ack_txpower);
++ /* Init function */
++ int ath5k_hw_phy_init(struct ath5k_hw *ah, struct ieee80211_channel *channel,
++ 				u8 mode, bool fast);
++--- a/drivers/net/wireless/ath/ath5k/mac80211-ops.c
+++++ b/drivers/net/wireless/ath/ath5k/mac80211-ops.c
++@@ -218,6 +218,10 @@ ath5k_config(struct ieee80211_hw *hw, u3
++ 			ath5k_hw_set_tx_retry_limits(ah, i);
++ 	}
++ 
+++	if (changed & IEEE80211_CONF_CHANGE_ACK_TXPOWER) {
+++		ath5k_hw_set_ack_txpower(ah, conf->ack_txpower);
+++	}
+++
++ 	/* TODO:
++ 	 * 1) Move this on config_interface and handle each case
++ 	 * separately eg. when we have only one STA vif, use
++--- a/drivers/net/wireless/ath/ath5k/phy.c
+++++ b/drivers/net/wireless/ath/ath5k/phy.c
++@@ -3704,9 +3704,9 @@ ath5k_hw_txpower(struct ath5k_hw *ah, st
++ 			AR5K_TUNE_MAX_TXPOWER, AR5K_PHY_TXPOWER_RATE_MAX);
++ 
++ 		ath5k_hw_reg_write(ah,
++-			AR5K_REG_MS(AR5K_TUNE_MAX_TXPOWER, AR5K_TPC_ACK) |
++-			AR5K_REG_MS(AR5K_TUNE_MAX_TXPOWER, AR5K_TPC_CTS) |
++-			AR5K_REG_MS(AR5K_TUNE_MAX_TXPOWER, AR5K_TPC_CHIRP),
+++			AR5K_REG_SM(AR5K_TUNE_MAX_TXPOWER, AR5K_TPC_ACK) |
+++			AR5K_REG_SM(AR5K_TUNE_MAX_TXPOWER, AR5K_TPC_CTS) |
+++			AR5K_REG_SM(AR5K_TUNE_MAX_TXPOWER, AR5K_TPC_CHIRP),
++ 			AR5K_TPC);
++ 	} else {
++ 		ath5k_hw_reg_write(ah, AR5K_TUNE_MAX_TXPOWER,
++@@ -3733,6 +3733,26 @@ ath5k_hw_set_txpower_limit(struct ath5k_
++ 	return ath5k_hw_txpower(ah, ah->ah_current_channel, txpower);
++ }
++ 
+++void ath5k_hw_set_ack_txpower(struct ath5k_hw *ah, s8 ack_txpower)
+++{
+++	u32 tpc;
+++
+++	if (ack_txpower > ah->ah_txpower.txp_requested)
+++		ack_txpower = ah->ah_txpower.txp_requested;
+++
+++	ack_txpower *= 2;
+++	ack_txpower += ah->ah_txpower.txp_offset;
+++
+++	if (ack_txpower > AR5K_TUNE_MAX_TXPOWER)
+++	ack_txpower = AR5K_TUNE_MAX_TXPOWER;
+++
+++	tpc = ath5k_hw_reg_read(ah, AR5K_TPC);
+++	tpc &= ~(AR5K_TPC_ACK | AR5K_TPC_CTS | AR5K_TPC_CHIRP);
+++	tpc |= AR5K_REG_SM(ack_txpower, AR5K_TPC_ACK) |
+++			   AR5K_REG_SM(ack_txpower, AR5K_TPC_CTS) |
+++			   AR5K_REG_SM(ack_txpower, AR5K_TPC_CHIRP);
+++	ath5k_hw_reg_write(ah, tpc, AR5K_TPC);
+++}
++ 
++ /*************\
++  Init function
+Index: lede/package/kernel/mac80211/patches/9977-ath5k-enable-rate-txpower.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9977-ath5k-enable-rate-txpower.patch
+@@ -0,0 +1,43 @@
++--- a/drivers/net/wireless/ath/ath5k/ath5k.h
+++++ b/drivers/net/wireless/ath/ath5k/ath5k.h
++@@ -190,7 +190,7 @@ do {									\
++ #define AR5K_TUNE_CCA_MAX_GOOD_VALUE		-95
++ #define AR5K_TUNE_MAX_TXPOWER			63
++ #define AR5K_TUNE_DEFAULT_TXPOWER		25
++-#define AR5K_TUNE_TPC_TXPOWER			false
+++#define AR5K_TUNE_TPC_TXPOWER			true
++ #define ATH5K_TUNE_CALIBRATION_INTERVAL_FULL    60000   /* 60 sec */
++ #define	ATH5K_TUNE_CALIBRATION_INTERVAL_SHORT	10000	/* 10 sec */
++ #define ATH5K_TUNE_CALIBRATION_INTERVAL_ANI	1000	/* 1 sec */
++--- a/drivers/net/wireless/ath/ath5k/base.c
+++++ b/drivers/net/wireless/ath/ath5k/base.c
++@@ -2558,6 +2558,8 @@ ath5k_init_ah(struct ath5k_hw *ah, const
++ 	ieee80211_hw_set(hw, SIGNAL_DBM);
++ 	ieee80211_hw_set(hw, RX_INCLUDES_FCS);
++ 	ieee80211_hw_set(hw, HOST_BROADCAST_PS_BUFFERING);
+++	ieee80211_hw_set(hw, SUPPORTS_TPC_PER_PACKET);
+++	ieee80211_hw_set(hw, SUPPORTS_TPC_FOR_ACK_PACKETS);
++ 
++ 	hw->wiphy->interface_modes =
++ 		BIT(NL80211_IFTYPE_AP) |
++@@ -2629,6 +2631,9 @@ ath5k_init_ah(struct ath5k_hw *ah, const
++ 					 AR5K_INIT_RETRY_LONG);
++ 	}
++ 
+++	/* set min txpower hardware capability in dBm */
+++	hw->min_txpower = 0;
+++
++ 	hw->vif_data_size = sizeof(struct ath5k_vif);
++ 
++ 	/* Finish private driver data initialization */
++--- a/drivers/net/wireless/ath/ath5k/phy.c
+++++ b/drivers/net/wireless/ath/ath5k/phy.c
++@@ -3698,7 +3698,7 @@ ath5k_hw_txpower(struct ath5k_hw *ah, st
++ 		AR5K_TXPOWER_CCK(13, 16) | AR5K_TXPOWER_CCK(12, 8) |
++ 		AR5K_TXPOWER_CCK(11, 0), AR5K_PHY_TXPOWER_RATE4);
++ 
++-	/* FIXME: TPC support */
+++	/* TPC support */
++ 	if (ah->ah_txpower.txp_tpc) {
++ 		ath5k_hw_reg_write(ah, AR5K_PHY_TXPOWER_RATE_MAX_TPC_ENABLE |
++ 			AR5K_TUNE_MAX_TXPOWER, AR5K_PHY_TXPOWER_RATE_MAX);
+Index: lede/package/kernel/mac80211/patches/9981-ath9k_enable_paprd.patch
+===================================================================
+--- /dev/null
++++ lede/package/kernel/mac80211/patches/9981-ath9k_enable_paprd.patch
+@@ -0,0 +1,22 @@
++--- a/drivers/net/wireless/ath/ath9k/init.c
+++++ b/drivers/net/wireless/ath/ath9k/init.c
++@@ -980,6 +980,11 @@ static void ath_get_initial_entropy(stru
++ 	add_device_randomness(buf, sizeof(buf));
++ }
++ 
+++void ath9k_enable_paprd(struct ath_hw *ah)
+++{
+++	ah->config.enable_paprd = 1;
+++}
+++
++ int ath9k_init_device(u16 devid, struct ath_softc *sc,
++ 		    const struct ath_bus_ops *bus_ops)
++ {
++@@ -1045,6 +1050,7 @@ int ath9k_init_device(u16 devid, struct
++ 			goto debug_cleanup;
++ 	}
++ 
+++	ath9k_enable_paprd(ah);
++ 	ath_init_leds(sc);
++ 	ath_start_rfkill_poll(sc);
++ 
