@@ -22,7 +22,6 @@ kmod-sched-cake
 
 # Common
 dnsmasq
-#iwinfo
 libiwinfo-lua
 rpcd-mod-iwinfo
 
@@ -53,4 +52,3 @@ vtun
 
 # kalua
 kalua-trunk
-#luci-app-weimarnetz

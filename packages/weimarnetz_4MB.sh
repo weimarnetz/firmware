@@ -58,6 +58,3 @@ rm -rf usr/lib/opkg
 rm -rf etc/opkg*
 # as this will be included into image for some reason, even it's
 # not listed for inclusion
-echo "manually removing usign ..."
-rm usr/bin/usign
-rm usr/bin/signify
