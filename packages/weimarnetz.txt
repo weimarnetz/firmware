@@ -12,8 +12,6 @@ kmod-ipt-nat
 # Common
 mtr
 iperf
-ethtool
-#horst
 dnsmasq
 #iwinfo
 libiwinfo-lua
@@ -29,10 +27,10 @@ luci-app-owm
 luci-app-owm-cmd
 luci-theme-bootstrap
 # GUI addon
-luci-i18n-base-de
-luci-i18n-base-en
-luci-i18n-olsr-de
-luci-i18n-olsr-en
+#luci-i18n-base-de
+#luci-i18n-base-en
+#luci-i18n-olsr-de
+#luci-i18n-olsr-en
 
 # OLSR
 olsrd
@@ -47,8 +45,9 @@ olsrd-mod-dyn-gw
 vtun
 
 # Weimarnetz
-kalua-trunk
+weimarnetz-ffwizard
 #luci-app-weimarnetz
 kmod-sched-cake
 kmod-ifb
 sqm-scripts
+iw
