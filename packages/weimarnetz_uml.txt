@@ -1,0 +1,55 @@
+-kmod-ppp
+-ppp
+-ppp-mod-pppoe
+-wpad-mini
+-wpad 
+-firewall
+
+# Defaults
+hostapd-mini
+kmod-ipt-nat
+
+# Common
+mtr
+iperf
+dnsmasq
+#iwinfo
+libiwinfo-lua
+rpcd-mod-iwinfo
+
+# GUI-basics
+uhttpd
+luci-mod-admin-full
+luci-mod-freifunk
+luci-app-olsr
+luci-app-olsr-services
+luci-app-owm
+luci-app-owm-cmd
+luci-theme-bootstrap
+# GUI addon
+#luci-i18n-base-de
+#luci-i18n-base-en
+#luci-i18n-olsr-de
+#luci-i18n-olsr-en
+
+# OLSR
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-txtinfo
+olsrd-mod-nameservice
+olsrd-mod-watchdog
+olsrd-mod-dyn-gw
+
+# VPN
+vtun
+
+# Weimarnetz
+weimarnetz-ffwizard
+#luci-app-weimarnetz
+kmod-sched-cake
+kmod-ifb
+sqm-scripts
+iw
+perl
+openssh-sftp-server
