@@ -1,0 +1,54 @@
+-kmod-usb-core
+-kmod-usb2
+-kmod-ledtrig-usbdev
+-kmod-usb-ohci
+-kmod-ppp
+-kmod-usb-serial
+-ppp
+-ppp-mod-pppoe
+-wpad
+-wpad-mini
+-opkg
+-usign
+-firewall
+-freifunk-firewall
+
+hostapd-mini
+tc
+kmod-ipt-nat
+kmod-sched-cake
+kmod-ifb
+sqm-scripts
+
+# Common
+dnsmasq
+libiwinfo-lua
+rpcd-mod-iwinfo
+
+# GUI
+luci-mod-admin-full
+luci-mod-freifunk
+luci-theme-bootstrap
+luci-app-olsr
+luci-app-olsr-services
+uhttpd
+
+# owm 
+iwinfo
+libiwinfo-lua
+luci-app-owm
+luci-app-owm-cmd
+
+# OLSR
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-nameservice
+olsrd-mod-txtinfo
+olsrd-mod-dyn-gw
+
+# VPN
+vtun
+
+# github.com/weimarnetz/weimarnetz
+weimarnetz-next
