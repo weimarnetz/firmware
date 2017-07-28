@@ -1,54 +1,54 @@
--kmod-usb-core
--kmod-usb2
--kmod-ledtrig-usbdev
--kmod-usb-ohci
 -kmod-ppp
--kmod-usb-serial
 -ppp
 -ppp-mod-pppoe
--wpad
 -wpad-mini
--opkg
--usign
+-wpad 
 -firewall
--freifunk-firewall
 
+# Defaults
 hostapd-mini
-tc
 kmod-ipt-nat
-kmod-sched-cake
-#kmod-ifb
-#sqm-scripts
 
 # Common
+mtr
+iperf
 dnsmasq
-libiwinfo-lua
+#iwinfo
+#libiwinfo-lua
 rpcd-mod-iwinfo
 
-# GUI
-luci-mod-admin-full
-luci-mod-freifunk
-luci-theme-bootstrap
-luci-app-olsr
-luci-app-olsr-services
+# GUI-basics
 uhttpd
-
-# owm 
-iwinfo
-libiwinfo-lua
+uhttpd-mod-ubus
+#luci-mod-admin-full
+#luci-mod-freifunk
+#luci-app-olsr
+#luci-app-olsr-services
 luci-app-owm
 luci-app-owm-cmd
+#luci-theme-bootstrap
+# GUI addon
+#luci-i18n-base-de
+#luci-i18n-base-en
+#luci-i18n-olsr-de
+#luci-i18n-olsr-en
 
 # OLSR
 olsrd
 olsrd-mod-arprefresh
 olsrd-mod-jsoninfo
-olsrd-mod-nameservice
 olsrd-mod-txtinfo
+olsrd-mod-nameservice
+olsrd-mod-watchdog
 olsrd-mod-dyn-gw
 
 # VPN
-vtun
+wireguard 
 
-# kalua
-kalua-trunk
+# Weimarnetz
+weimarnetz-ffwizard
+#luci-app-weimarnetz
+kmod-sched-cake
+kmod-ifb
+sqm-scripts
+iw

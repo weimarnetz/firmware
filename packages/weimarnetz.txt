@@ -14,18 +14,19 @@ mtr
 iperf
 dnsmasq
 #iwinfo
-libiwinfo-lua
+#libiwinfo-lua
 rpcd-mod-iwinfo
 
 # GUI-basics
 uhttpd
-luci-mod-admin-full
-luci-mod-freifunk
-luci-app-olsr
-luci-app-olsr-services
+uhttpd-mod-ubus
+#luci-mod-admin-full
+#luci-mod-freifunk
+#luci-app-olsr
+#luci-app-olsr-services
 luci-app-owm
 luci-app-owm-cmd
-luci-theme-bootstrap
+#luci-theme-bootstrap
 # GUI addon
 #luci-i18n-base-de
 #luci-i18n-base-en
@@ -42,7 +43,7 @@ olsrd-mod-watchdog
 olsrd-mod-dyn-gw
 
 # VPN
-vtun
+wireguard
 
 # Weimarnetz
 weimarnetz-ffwizard
