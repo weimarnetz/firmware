@@ -16,6 +16,7 @@ dnsmasq
 #iwinfo
 #libiwinfo-lua
 rpcd-mod-iwinfo
+rpcd
 
 # GUI-basics
 uhttpd
@@ -43,7 +44,9 @@ olsrd-mod-watchdog
 olsrd-mod-dyn-gw
 
 # VPN
-wireguard
+#kmod-wireguard
+#wireguard
+vtun 
 
 # Weimarnetz
 weimarnetz-ffwizard
