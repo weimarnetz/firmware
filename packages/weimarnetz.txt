@@ -10,8 +10,6 @@ hostapd-mini
 kmod-ipt-nat
 
 # Common
-mtr
-iperf
 dnsmasq
 #iwinfo
 #libiwinfo-lua
@@ -21,13 +19,13 @@ rpcd
 # GUI-basics
 uhttpd
 uhttpd-mod-ubus
-#luci-mod-admin-full
-#luci-mod-freifunk
-#luci-app-olsr
-#luci-app-olsr-services
+luci-mod-admin-full
+luci-mod-freifunk
+luci-app-olsr
+luci-app-olsr-services
 luci-app-owm
 luci-app-owm-cmd
-#luci-theme-bootstrap
+luci-theme-bootstrap
 # GUI addon
 #luci-i18n-base-de
 #luci-i18n-base-en
@@ -51,7 +49,7 @@ vtun
 # Weimarnetz
 weimarnetz-ffwizard
 #luci-app-weimarnetz
-kmod-sched-cake
-kmod-ifb
-sqm-scripts
+#kmod-sched-cake
+#kmod-ifb
+#sqm-scripts
 iw
