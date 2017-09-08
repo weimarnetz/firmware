@@ -52,3 +52,4 @@ kmod-scsi-core
 kmod-usb-ohci
 kmod-usb2
 usbutils
+block-mount
