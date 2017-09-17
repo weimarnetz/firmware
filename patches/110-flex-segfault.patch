@@ -1,8 +1,8 @@
-diff --git a/tools/flex/110-gcc720-segfault.patch b/tools/flex/110-gcc720-segfault.patch
+diff --git a/tools/flex/patches/110-gcc720-segfault.patch b/tools/flex/patches/110-gcc720-segfault.patch
 new file mode 100644
 index 0000000000..339ebe6469
 --- /dev/null
-+++ b/tools/flex/110-gcc720-segfault.patch
++++ b/tools/flex/patches/110-gcc720-segfault.patch
 @@ -0,0 +1,31 @@
 +--- a/configure.ac
 ++++ b/configure.ac
