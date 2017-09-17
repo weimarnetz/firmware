@@ -1,22 +1,21 @@
-Index: lede/tools/flex/patches/110-gcc720-segfault.patch
-===================================================================
+diff --git a/tools/flex/110-gcc720-segfault.patch b/tools/flex/110-gcc720-segfault.patch
+new file mode 100644
+index 0000000000..339ebe6469
 --- /dev/null
-+++ lede/tools/flex/patches/110-gcc720-segfault.patch
-@@ -0,0 +1,34 @@
++++ b/tools/flex/110-gcc720-segfault.patch
+@@ -0,0 +1,31 @@
 +--- a/configure.ac
 ++++ b/configure.ac
 +@@ -25,8 +25,10 @@
 + # autoconf requirements and initialization
 + 
-+ AC_INIT([the fast lexical analyser 
-+generator],[2.6.4],[flex-help@lists.sourceforge.net],[flex])
++ AC_INIT([the fast lexical analyser generator],[2.6.4],[flex-help@lists.sourceforge.net],[flex])
 ++AC_PREREQ([2.60])
 + AC_CONFIG_SRCDIR([src/scan.l])
 + AC_CONFIG_AUX_DIR([build-aux])
 ++AC_USE_SYSTEM_EXTENSIONS
 + LT_INIT
-+ AM_INIT_AUTOMAKE([1.11.3 -Wno-portability foreign check-news std-options dist-lzip 
-+parallel-tests subdir-objects])
++ AM_INIT_AUTOMAKE([1.11.3 -Wno-portability foreign check-news std-options dist-lzip parallel-tests subdir-objects])
 + AC_CONFIG_HEADER([src/config.h])
 +--- a/src/scan.l
 ++++ b/src/scan.l
@@ -36,4 +35,3 @@ Index: lede/tools/flex/patches/110-gcc720-segfault.patch
 + #include "parse.h"
 + extern bool tablesverify, tablesext;
 + extern int trlcontxt; /* Set in  parse.y for each rule. */
-+
