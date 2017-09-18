@@ -10,15 +10,14 @@ This is based on the firmware building code from [Freifunk Berlin](https://githu
 
 ## Images
 
-Successful builds end up at http://weimarnetz.segfault.gq/firmwares
+Successful builds may end up at http://weimarnetz.segfault.gq/firmwares
 
 ```
 :: Folder Structure
 
 /firmwares/<version>/<target>/<packagelist> 
               ^         ^          ^
-              |         |          | kalua         - git master from weimarnetz
-              |         |          | kalua_bittorf - git master from bittorf/kalua
+              |         |          | weimarnetz         - git master from weimarnetz
               |         |
               |         | ar71xx   - most routers with Atheros SoCs
               |         | ... 
@@ -79,7 +78,7 @@ firmwares/            - Folder where the final images end up
 ## Usage 
 
 ```
-$ git clone https://gitlab.bau-ha.us/weimarnetz/firmware
+$ git clone https://github.com/weimarnetz/firmware
 $ cd firmware
 // build all images for ar71xx
 $ make (+LEDE build flags i.e. -j$(nproc), V=s ...) 
