@@ -44,9 +44,9 @@ olsrd-mod-watchdog
 olsrd-mod-dyn-gw
 
 # VPN
-kmod-wireguard
-wireguard
-#vtun 
+#kmod-wireguard
+#wireguard
+vtun 
 
 # Weimarnetz
 weimarnetz-ffwizard
