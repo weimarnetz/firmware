@@ -47,6 +47,7 @@ olsrd-mod-dyn-gw
 #kmod-wireguard
 #wireguard
 vtun 
+resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
