@@ -2,7 +2,7 @@ Index: lede/target/linux/ar71xx/image/generic.mk
 ===================================================================
 --- lede.orig/target/linux/ar71xx/image/generic.mk
 +++ lede/target/linux/ar71xx/image/generic.mk
-@@ -534,7 +534,7 @@ TARGET_DEVICES += rnx-n360rt
+@@ -571,7 +571,7 @@ TARGET_DEVICES += rnx-n360rt
  define Device/mc-mac1200r
    $(Device/tplink-8mlzma)
    DEVICE_TITLE := Mercury MAC1200R
@@ -15,7 +15,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
 ===================================================================
 --- lede.orig/target/linux/ar71xx/image/legacy-devices.mk
 +++ lede/target/linux/ar71xx/image/legacy-devices.mk
-@@ -182,7 +182,7 @@ LEGACY_DEVICES += YUN_16M
+@@ -170,7 +170,7 @@ LEGACY_DEVICES += WLR8100
  define LegacyDevice/F9K1115V2
    DEVICE_TITLE := Belkin AC1750DB (F9K1115V2)
    DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb3 kmod-usb-ledtrig-usbport \
@@ -24,7 +24,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += F9K1115V2
  
-@@ -269,13 +269,13 @@ LEGACY_DEVICES += DIR505A1
+@@ -257,13 +257,13 @@ LEGACY_DEVICES += DIR505A1
  
  define LegacyDevice/DGL5500A1
    DEVICE_TITLE := D-Link DGL-5500 rev. A1
@@ -40,7 +40,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += TEW823DRU
  
-@@ -344,7 +344,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
+@@ -332,7 +332,7 @@ LEGACY_DEVICES += dLAN_pro_500_wp
  
  define LegacyDevice/dLAN_pro_1200_ac
    DEVICE_TITLE := devolo dLAN pro 1200+ WiFi ac
@@ -49,7 +49,7 @@ Index: lede/target/linux/ar71xx/image/legacy-devices.mk
  endef
  LEGACY_DEVICES += dLAN_pro_1200_ac
  
-@@ -356,13 +356,13 @@ LEGACY_DEVICES += ESR900
+@@ -344,13 +344,13 @@ LEGACY_DEVICES += ESR900
  
  define LegacyDevice/ESR1750
    DEVICE_TITLE := EnGenius ESR1750
@@ -81,25 +81,25 @@ Index: lede/target/linux/ar71xx/image/tp-link.mk
 ===================================================================
 --- lede.orig/target/linux/ar71xx/image/tp-link.mk
 +++ lede/target/linux/ar71xx/image/tp-link.mk
-@@ -140,7 +140,7 @@ endef
+@@ -130,7 +130,7 @@ endef
  define Device/archer-c59-v1
    $(Device/archer-cxx)
    DEVICE_TITLE := TP-LINK Archer C59 v1
 -  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
 +  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
    BOARDNAME := ARCHER-C59-V1
-   TPLINK_BOARD_NAME := ARCHER-C59-V1
+   TPLINK_BOARD_ID := ARCHER-C59-V1
    DEVICE_PROFILE := ARCHERC59V1
-@@ -151,7 +151,7 @@ endef
+@@ -142,7 +142,7 @@ endef
  define Device/archer-c60-v1
    $(Device/archer-cxx)
    DEVICE_TITLE := TP-LINK Archer C60 v1
 -  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
 +  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x-ct
    BOARDNAME := ARCHER-C60-V1
-   TPLINK_BOARD_NAME := ARCHER-C60-V1
+   TPLINK_BOARD_ID := ARCHER-C60-V1
    DEVICE_PROFILE := ARCHERC60V1
-@@ -264,7 +264,7 @@ TARGET_DEVICES += eap120-v1
+@@ -256,7 +256,7 @@ TARGET_DEVICES += eap120-v1
  
  define Device/re450-v1
    DEVICE_TITLE := TP-LINK RE450 v1
@@ -108,16 +108,16 @@ Index: lede/target/linux/ar71xx/image/tp-link.mk
    MTDPARTS := spi0.0:128k(u-boot)ro,1344k(kernel),4672k(rootfs),64k(pation-table)ro,64k(product-info)ro,1856k(config)ro,64k(art)ro,6016k@0x20000(firmware)
    IMAGE_SIZE := 7936k
    BOARDNAME := RE450
-@@ -611,7 +611,7 @@ endef
+@@ -620,7 +620,7 @@ endef
  define Device/tl-wdr6500-v2
    $(Device/tplink-8mlzma)
    DEVICE_TITLE := TP-LINK TL-WDR6500 v2
 -  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x
 +  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k ath10k-firmware-qca988x-ct
    KERNEL := kernel-bin | patch-cmdline | lzma | uImage lzma
-   KERNEL_INITRAMFS := kernel-bin | patch-cmdline | lzma | uImage lzma | mktplinkfw-combined
+   KERNEL_INITRAMFS := kernel-bin | patch-cmdline | lzma | uImage lzma | tplink-v1-header
    BOARDNAME := TL-WDR6500-v2
-@@ -630,7 +630,7 @@ TARGET_DEVICES += tl-wdr3320-v2 tl-wdr35
+@@ -639,7 +639,7 @@ TARGET_DEVICES += tl-wdr3320-v2 tl-wdr35
  define Device/tl-wpa8630-v1
    $(Device/tplink-8mlzma)
    DEVICE_TITLE := TP-LINK TL-WPA8630 v1

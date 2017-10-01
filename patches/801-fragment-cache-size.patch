@@ -2,7 +2,7 @@ Index: lede/target/linux/generic/config-4.4
 ===================================================================
 --- lede.orig/target/linux/generic/config-4.4
 +++ lede/target/linux/generic/config-4.4
-@@ -4011,7 +4011,7 @@ CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU=y
+@@ -4012,7 +4012,7 @@ CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU=y
  # CONFIG_SQUASHFS_EMBEDDED is not set
  # CONFIG_SQUASHFS_FILE_CACHE is not set
  CONFIG_SQUASHFS_FILE_DIRECT=y
