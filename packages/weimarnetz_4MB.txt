@@ -5,16 +5,12 @@
 -wpad 
 -firewall
 
-# Defaults
 hostapd-mini
 kmod-ipt-nat
-
-# Common
 dnsmasq
-#iwinfo
-#libiwinfo-lua
 rpcd-mod-iwinfo
 rpcd
+iw
 
 # GUI-basics
 uhttpd
@@ -44,15 +40,9 @@ olsrd-mod-watchdog
 olsrd-mod-dyn-gw
 
 # VPN
-#kmod-wireguard
-#wireguard
 vtun 
 resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
-#luci-app-weimarnetz
-#kmod-sched-cake
-#kmod-ifb
-#sqm-scripts
-iw
+data-weimarnetz

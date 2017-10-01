@@ -43,9 +43,9 @@ olsrd-mod-dyn-gw
 vtun 
 resolveip
 
-# Weimarnetz
+#  
 weimarnetz-ffwizard
-data-weimarnetz
+data-camburg
 
 # extra
 mtr-tiny

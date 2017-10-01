@@ -45,9 +45,4 @@ resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
-data-weimarnetz
-
-# extra
-mtr-tiny
-tcpdump-mini
-iperf
+data-camburg
