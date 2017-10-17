@@ -45,4 +45,4 @@ resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
-data-weimarnetz
+data-weimar
