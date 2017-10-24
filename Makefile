@@ -98,7 +98,7 @@ $(LEDE_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
 	sed -i '/^CONFIG_VERSION_NUMBER=/d' $(LEDE_DIR)/.config && \
 	echo "CONFIG_VERSION_NUMBER=$$FW_REVISION" >> $(LEDE_DIR)/.config
 	$(UMASK); \
-	  $(MAKE) -C $(LEDE_DIR) defconfig
+	  $(MAKE) -C $(LEDE_DIR) defconfig clean
 
 # prepare lede working copy
 prepare: stamp-clean-prepared .stamp-prepared
