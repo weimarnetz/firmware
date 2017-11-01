@@ -48,6 +48,6 @@ weimarnetz-ffwizard
 data-camburg
 
 # extra
-mtr-tiny
+mtr
 tcpdump-mini
 iperf

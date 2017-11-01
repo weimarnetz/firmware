@@ -48,6 +48,6 @@ weimarnetz-ffwizard
 data-weimar
 
 # extra
-mtr-tiny
+mtr
 tcpdump-mini
 iperf
