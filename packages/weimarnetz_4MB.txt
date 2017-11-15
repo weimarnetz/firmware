@@ -11,6 +11,7 @@ dnsmasq
 rpcd-mod-iwinfo
 rpcd
 iw
+tc
 
 # GUI-basics
 uhttpd
@@ -22,6 +23,7 @@ luci-app-olsr-services
 luci-app-owm
 luci-app-owm-cmd
 luci-theme-bootstrap
+libiwinfo-lua
 # GUI addon
 luci-i18n-base-de
 luci-i18n-base-en
