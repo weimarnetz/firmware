@@ -25,7 +25,7 @@ Successful builds may end up at http://weimarnetz.segfault.gq/firmwares
               |         | uml      - user mode linux
               |         | ramips_* - most Mediatek SoCs
               |
-              | git describe --always from this repo + LEDE revision + shorthash
+              | git describe --always from this repo + OpenWRT revision + shorthash
 
 ```
 
@@ -33,8 +33,8 @@ Successful builds may end up at http://weimarnetz.segfault.gq/firmwares
 
 How does this stuff work? 
 
-The idea is to download LEDE via git, patch it with all patches in the `patches` folder and configure it according to the configuration snippets in `configs`. 
-Then use the LEDE buildsystem to build all packages and the Imagebuilder and use the latter to assemble the final image with lists of packages in `packages` for the router. 
+The idea is to download OpenWRT via git, patch it with all patches in the `patches` folder and configure it according to the configuration snippets in `configs`. 
+Then use the OpenWRT buildsystem to build all packages and the Imagebuilder and use the latter to assemble the final image with lists of packages in `packages` for the router. 
 
 ## Dependencies 
 
@@ -56,16 +56,16 @@ Where can I change something? What does these files do?
 ```
 :: Settings
 
-config.mk             - LEDE git repository, revision, select what package lists to build
-feeds.conf            - LEDE feeds.conf that is used for the package feeds during build
+config.mk             - OpenWRT git repository, revision, select what package lists to build
+feeds.conf            - OpenWRT feeds.conf that is used for the package feeds during build
 
-patches/              - Patches against the LEDE directory 
+patches/              - Patches against the OpenWRT directory 
 packages/             - Package Lists 
 profiles/             - List of router profiles for each architecture - names come from the Imagebuilder
 
 :: Building 
 
-Makefile              - Does all the stuff. Cloning and Updating LEDE, patching, running make
+Makefile              - Does all the stuff. Cloning and Updating OpenWRT, patching, running make
 assemble_firmware.sh  - Script for running the Imagebuilder for a target
 
 
@@ -81,11 +81,13 @@ firmwares/            - Folder where the final images end up
 $ git clone https://github.com/weimarnetz/firmware
 $ cd firmware
 // build all images for ar71xx
-$ make (+LEDE build flags i.e. -j$(nproc), V=s ...) 
+$ make (+OpenWRT build flags i.e. -j$(nproc), V=s ...) 
 // build for x86
 $ make TARGET=x86
 // build for ramips_mt7268 
-$ make TARGET=ramips_mt7268 
+$ make TARGET=ramips_mt7268
+// build a different package list 
+$ make PKG_LIST=weimarnetz_usbtether
 // look at debug messages, when building UML
 $ make TARGET=uml V=s 
 ...
@@ -201,7 +203,7 @@ In order to add, modify or delete a patch run:
 
     $ make clean pre-patch
 
-Then switch to the LEDE directory:
+Then switch to the OpenWRT directory:
 
     $ cd build/lede
 
