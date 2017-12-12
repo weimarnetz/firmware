@@ -1,4 +1,3 @@
-archer-c60v2.patch
 dropbear-dsa.patch
 0007-mac80211-ath10k-allow-simultaneous-AP-IBSS.patch
 801-fragment-cache-size.patch
