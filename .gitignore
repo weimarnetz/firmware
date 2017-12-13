@@ -1,5 +1,6 @@
 .*.swp
 .stamp*
+.pc
 patches/*~
 bin
 firmwares
