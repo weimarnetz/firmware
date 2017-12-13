@@ -1,5 +1,6 @@
-dropbear-dsa.patch
 0007-mac80211-ath10k-allow-simultaneous-AP-IBSS.patch
 801-fragment-cache-size.patch
 201-luci-remove-freifunk-firewall.patch
 003-add-respawn.patch
+802-fragment-cache-size-4.9.patch
+820-dropbear-dss.patch
