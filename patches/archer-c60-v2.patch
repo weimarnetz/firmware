@@ -60,10 +60,10 @@ Signed-off-by: Henryk Heisig <hyniu@o2.pl>
  tools/firmware-utils/src/tplink-safeloader.c       | 38 ++++++++++
  16 files changed, 160 insertions(+), 6 deletions(-)
 
-diff --git a/target/linux/ar71xx/base-files/etc/board.d/01_leds b/target/linux/ar71xx/base-files/etc/board.d/01_leds
-index e5baa90db89..b9876834b4b 100755
---- a/target/linux/ar71xx/base-files/etc/board.d/01_leds
-+++ b/target/linux/ar71xx/base-files/etc/board.d/01_leds
+Index: openwrt/target/linux/ar71xx/base-files/etc/board.d/01_leds
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/etc/board.d/01_leds
++++ openwrt/target/linux/ar71xx/base-files/etc/board.d/01_leds
 @@ -76,7 +76,8 @@ archer-c7-v4)
  	;;
  archer-c58-v1|\
@@ -74,10 +74,10 @@ index e5baa90db89..b9876834b4b 100755
  	ucidef_set_led_switch "lan" "LAN" "$board:green:lan" "switch0" "0x1E"
  	ucidef_set_led_netdev "wan" "WAN" "$board:green:wan" "eth0"
  	ucidef_set_led_wlan "wlan" "WLAN" "$board:green:wlan2g" "phy1tpt"
-diff --git a/target/linux/ar71xx/base-files/etc/board.d/02_network b/target/linux/ar71xx/base-files/etc/board.d/02_network
-index 7cf4212ac76..5957b63398a 100755
---- a/target/linux/ar71xx/base-files/etc/board.d/02_network
-+++ b/target/linux/ar71xx/base-files/etc/board.d/02_network
+Index: openwrt/target/linux/ar71xx/base-files/etc/board.d/02_network
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/etc/board.d/02_network
++++ openwrt/target/linux/ar71xx/base-files/etc/board.d/02_network
 @@ -236,7 +236,8 @@ ar71xx_setup_interfaces()
  		ucidef_add_switch "switch0" \
  			"0@eth1" "1:lan:1" "2:lan:4" "3:lan:3" "4:lan:2"
@@ -88,10 +88,10 @@ index 7cf4212ac76..5957b63398a 100755
  		ucidef_set_interfaces_lan_wan "eth1.1" "eth0"
  		ucidef_add_switch "switch0" \
  			"0@eth1" "1:lan:1" "2:lan:2" "3:lan:3" "4:lan:4"
-diff --git a/target/linux/ar71xx/base-files/etc/diag.sh b/target/linux/ar71xx/base-files/etc/diag.sh
-index 6cbb3576d8f..d67fb381d1d 100644
---- a/target/linux/ar71xx/base-files/etc/diag.sh
-+++ b/target/linux/ar71xx/base-files/etc/diag.sh
+Index: openwrt/target/linux/ar71xx/base-files/etc/diag.sh
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/etc/diag.sh
++++ openwrt/target/linux/ar71xx/base-files/etc/diag.sh
 @@ -60,6 +60,7 @@ get_status_led() {
  	archer-c58-v1|\
  	archer-c59-v1|\
@@ -100,10 +100,10 @@ index 6cbb3576d8f..d67fb381d1d 100644
  	archer-c7-v4|\
  	fritz300e|\
  	gl-usb150|\
-diff --git a/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata b/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
-index 6a0a59f6105..c4247e839d2 100644
---- a/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
-+++ b/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
+Index: openwrt/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
++++ openwrt/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
 @@ -141,7 +141,8 @@ case "$FIRMWARE" in
  	case $board in
  	archer-c58-v1|\
@@ -114,10 +114,10 @@ index 6a0a59f6105..c4247e839d2 100644
  		ath10kcal_extract "art" 20480 12064
  		ln -sf /lib/firmware/ath10k/pre-cal-pci-0000\:00\:00.0.bin \
  			/lib/firmware/ath10k/QCA9888/hw2.0/board.bin
-diff --git a/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac b/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
-index 0530d595a75..a763938ecda 100644
---- a/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
-+++ b/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
+Index: openwrt/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
++++ openwrt/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
 @@ -14,7 +14,8 @@ board=$(board_name)
  case "$board" in
  	archer-c58-v1|\
@@ -128,10 +128,10 @@ index 0530d595a75..a763938ecda 100644
  		echo $(macaddr_add $(mtd_get_mac_binary mac 8)  $(($PHYNBR - 1)) ) > /sys${DEVPATH}/macaddress
  		;;
  	*)
-diff --git a/target/linux/ar71xx/base-files/lib/ar71xx.sh b/target/linux/ar71xx/base-files/lib/ar71xx.sh
-index 285fa68357c..9c7159fdf59 100755
---- a/target/linux/ar71xx/base-files/lib/ar71xx.sh
-+++ b/target/linux/ar71xx/base-files/lib/ar71xx.sh
+Index: openwrt/target/linux/ar71xx/base-files/lib/ar71xx.sh
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/lib/ar71xx.sh
++++ openwrt/target/linux/ar71xx/base-files/lib/ar71xx.sh
 @@ -464,6 +464,9 @@ ar71xx_board_detect() {
  	*"Archer C60 v1")
  		name="archer-c60-v1"
@@ -142,11 +142,11 @@ index 285fa68357c..9c7159fdf59 100755
  	*"Archer C7")
  		name="archer-c7"
  		;;
-diff --git a/target/linux/ar71xx/base-files/lib/upgrade/platform.sh b/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
-index 172a58ba67f..dbe0d0872c9 100755
---- a/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
-+++ b/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
-@@ -211,6 +211,7 @@ platform_check_image() {
+Index: openwrt/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
++++ openwrt/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
+@@ -202,6 +202,7 @@ platform_check_image() {
  	archer-c58-v1|\
  	archer-c59-v1|\
  	archer-c60-v1|\
@@ -154,10 +154,10 @@ index 172a58ba67f..dbe0d0872c9 100755
  	archer-c7-v4|\
  	bullet-m|\
  	c-55|\
-diff --git a/target/linux/ar71xx/config-4.9 b/target/linux/ar71xx/config-4.9
-index 1d47246bf36..7332170b0d7 100644
---- a/target/linux/ar71xx/config-4.9
-+++ b/target/linux/ar71xx/config-4.9
+Index: openwrt/target/linux/ar71xx/config-4.9
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/config-4.9
++++ openwrt/target/linux/ar71xx/config-4.9
 @@ -54,6 +54,7 @@ CONFIG_ATH79_MACH_ARCHER_C25_V1=y
  CONFIG_ATH79_MACH_ARCHER_C58_V1=y
  CONFIG_ATH79_MACH_ARCHER_C59_V1=y
@@ -166,10 +166,10 @@ index 1d47246bf36..7332170b0d7 100644
  CONFIG_ATH79_MACH_ARCHER_C7=y
  CONFIG_ATH79_MACH_ARDUINO_YUN=y
  CONFIG_ATH79_MACH_AW_NR580=y
-diff --git a/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt b/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
-index 1198fcb74bd..712b9fcbf09 100644
---- a/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
-+++ b/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
+Index: openwrt/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
++++ openwrt/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
 @@ -1402,6 +1402,16 @@ config ATH79_MACH_ARCHER_C60_V1
  	select ATH79_DEV_M25P80
  	select ATH79_DEV_WMAC
@@ -187,11 +187,11 @@ index 1198fcb74bd..712b9fcbf09 100644
  config ATH79_MACH_ARCHER_C7
  	bool "TP-LINK Archer C5/C7/TL-WDR4900 v2 board support"
  	select SOC_QCA955X
-diff --git a/target/linux/ar71xx/files/arch/mips/ath79/Makefile b/target/linux/ar71xx/files/arch/mips/ath79/Makefile
-index 455af762e33..b0c6a36ff0f 100644
---- a/target/linux/ar71xx/files/arch/mips/ath79/Makefile
-+++ b/target/linux/ar71xx/files/arch/mips/ath79/Makefile
-@@ -62,6 +62,7 @@ obj-$(CONFIG_ATH79_MACH_ARCHER_C25_V1)		+= mach-archer-c25-v1.o
+Index: openwrt/target/linux/ar71xx/files/arch/mips/ath79/Makefile
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/files/arch/mips/ath79/Makefile
++++ openwrt/target/linux/ar71xx/files/arch/mips/ath79/Makefile
+@@ -62,6 +62,7 @@ obj-$(CONFIG_ATH79_MACH_ARCHER_C25_V1)
  obj-$(CONFIG_ATH79_MACH_ARCHER_C58_V1)		+= mach-archer-c59-v1.o
  obj-$(CONFIG_ATH79_MACH_ARCHER_C59_V1)		+= mach-archer-c59-v1.o
  obj-$(CONFIG_ATH79_MACH_ARCHER_C60_V1)		+= mach-archer-c60-v1.o
@@ -199,10 +199,10 @@ index 455af762e33..b0c6a36ff0f 100644
  obj-$(CONFIG_ATH79_MACH_ARCHER_C7)		+= mach-archer-c7.o
  obj-$(CONFIG_ATH79_MACH_ARCHER_C7)		+= mach-archer-c7-v4.o
  obj-$(CONFIG_ATH79_MACH_ARDUINO_YUN)		+= mach-arduino-yun.o
-diff --git a/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c b/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c
-index 4d83fa737b9..88f4f081a34 100644
---- a/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c
-+++ b/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c
+Index: openwrt/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c
++++ openwrt/target/linux/ar71xx/files/arch/mips/ath79/mach-archer-c60-v1.c
 @@ -1,7 +1,7 @@
  /*
   *  TP-Link Archer C60 v1 board support
@@ -212,7 +212,7 @@ index 4d83fa737b9..88f4f081a34 100644
   *
   *  This program is free software; you can redistribute it and/or modify it
   *  under the terms of the GNU General Public License version 2 as published
-@@ -83,6 +83,44 @@ static struct gpio_led archer_c60_v1_leds_gpio[] __initdata = {
+@@ -83,6 +83,44 @@ static struct gpio_led archer_c60_v1_led
  	},
  };
  
@@ -257,7 +257,7 @@ index 4d83fa737b9..88f4f081a34 100644
  static struct gpio_keys_button archer_c60_v1_gpio_keys[] __initdata = {
  	{
  		.desc			= "Reset button",
-@@ -143,3 +181,45 @@ static void __init archer_c60_v1_setup(void)
+@@ -143,3 +181,45 @@ static void __init archer_c60_v1_setup(v
  
  MIPS_MACHINE(ATH79_MACH_ARCHER_C60_V1, "ARCHER-C60-V1",
  	"TP-LINK Archer C60 v1", archer_c60_v1_setup);
@@ -303,10 +303,10 @@ index 4d83fa737b9..88f4f081a34 100644
 +
 +MIPS_MACHINE(ATH79_MACH_ARCHER_C60_V2, "ARCHER-C60-V2",
 +	"TP-LINK Archer C60 v2", archer_c60_v2_setup);
-diff --git a/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h b/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
-index 0f536f0ec58..b7e656677f0 100644
---- a/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
-+++ b/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
+Index: openwrt/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
++++ openwrt/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
 @@ -47,6 +47,7 @@ enum ath79_mach_type {
  	ATH79_MACH_ARCHER_C58_V1,		/* TP-LINK Archer C58 V1 board */
  	ATH79_MACH_ARCHER_C59_V1,		/* TP-LINK Archer C59 V1 board */
@@ -315,16 +315,14 @@ index 0f536f0ec58..b7e656677f0 100644
  	ATH79_MACH_ARCHER_C7,			/* TP-LINK Archer C7 board */
  	ATH79_MACH_ARCHER_C7_V2,		/* TP-LINK Archer C7 V2 board */
  	ATH79_MACH_ARCHER_C7_V4,		/* TP-LINK Archer C7 V4 board */
-diff --git a/target/linux/ar71xx/image/tp-link.mk b/target/linux/ar71xx/image/tp-link.mk
-index 8dd42d23d06..bedee292ce9 100644
---- a/target/linux/ar71xx/image/tp-link.mk
-+++ b/target/linux/ar71xx/image/tp-link.mk
-@@ -150,7 +150,19 @@ define Device/archer-c60-v1
-   MTDPARTS := spi0.0:64k(u-boot)ro,64k(mac)ro,7936k(firmware),64k(tplink)ro,64k(art)ro
-   SUPPORTED_DEVICES := archer-c60-v1
+Index: openwrt/target/linux/ar71xx/image/tp-link.mk
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/image/tp-link.mk
++++ openwrt/target/linux/ar71xx/image/tp-link.mk
+@@ -155,6 +155,19 @@ define Device/archer-c60-v1
  endef
--TARGET_DEVICES += archer-c25-v1 archer-c58-v1 archer-c59-v1 archer-c60-v1
-+
+ TARGET_DEVICES += archer-c60-v1
+ 
 +define Device/archer-c60-v2
 +  $(Device/archer-cxx)
 +  DEVICE_TITLE := TP-LINK Archer C60 v2
@@ -336,14 +334,15 @@ index 8dd42d23d06..bedee292ce9 100644
 +  MTDPARTS := spi0.0:192k(u-boot)ro,7808k(firmware),128k(tplink)ro,64k(art)ro
 +  SUPPORTED_DEVICES := archer-c60-v2
 +endef
-+TARGET_DEVICES += archer-c25-v1 archer-c58-v1 archer-c59-v1 archer-c60-v1 archer-c60-v2
- 
++TARGET_DEVICES += archer-c60-v2
++
  define Device/archer-c5-v1
    $(Device/tplink-16mlzma)
-diff --git a/target/linux/ar71xx/mikrotik/config-default b/target/linux/ar71xx/mikrotik/config-default
-index b67fca1f145..bac133a4166 100644
---- a/target/linux/ar71xx/mikrotik/config-default
-+++ b/target/linux/ar71xx/mikrotik/config-default
+   DEVICE_TITLE := TP-LINK Archer C5 v1
+Index: openwrt/target/linux/ar71xx/mikrotik/config-default
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/mikrotik/config-default
++++ openwrt/target/linux/ar71xx/mikrotik/config-default
 @@ -22,6 +22,7 @@
  # CONFIG_ATH79_MACH_ARCHER_C58_V1 is not set
  # CONFIG_ATH79_MACH_ARCHER_C59_V1 is not set
@@ -352,10 +351,10 @@ index b67fca1f145..bac133a4166 100644
  # CONFIG_ATH79_MACH_ARCHER_C7 is not set
  # CONFIG_ATH79_MACH_ARDUINO_YUN is not set
  # CONFIG_ATH79_MACH_AW_NR580 is not set
-diff --git a/target/linux/ar71xx/nand/config-default b/target/linux/ar71xx/nand/config-default
-index f7c54e7d3cb..cd9fe1f84f4 100644
---- a/target/linux/ar71xx/nand/config-default
-+++ b/target/linux/ar71xx/nand/config-default
+Index: openwrt/target/linux/ar71xx/nand/config-default
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/nand/config-default
++++ openwrt/target/linux/ar71xx/nand/config-default
 @@ -21,6 +21,7 @@
  # CONFIG_ATH79_MACH_ARCHER_C58_V1 is not set
  # CONFIG_ATH79_MACH_ARCHER_C59_V1 is not set
@@ -364,10 +363,10 @@ index f7c54e7d3cb..cd9fe1f84f4 100644
  # CONFIG_ATH79_MACH_ARCHER_C7 is not set
  # CONFIG_ATH79_MACH_ARDUINO_YUN is not set
  # CONFIG_ATH79_MACH_AW_NR580 is not set
-diff --git a/tools/firmware-utils/src/tplink-safeloader.c b/tools/firmware-utils/src/tplink-safeloader.c
-index 88e2e88bdf3..9123e0dd0b8 100644
---- a/tools/firmware-utils/src/tplink-safeloader.c
-+++ b/tools/firmware-utils/src/tplink-safeloader.c
+Index: openwrt/tools/firmware-utils/src/tplink-safeloader.c
+===================================================================
+--- openwrt.orig/tools/firmware-utils/src/tplink-safeloader.c
++++ openwrt/tools/firmware-utils/src/tplink-safeloader.c
 @@ -450,6 +450,43 @@ static struct device_info boards[] = {
  		.last_sysupgrade_partition = "file-system",
  	},
@@ -412,7 +411,7 @@ index 88e2e88bdf3..9123e0dd0b8 100644
  	/** Firmware layout for the C5 */
  	{
  		.id = "ARCHER-C5-V2",
-@@ -1299,6 +1336,7 @@ static void build_image(const char *output,
+@@ -1299,6 +1336,7 @@ static void build_image(const char *outp
  
  	/* Some devices need the extra-para partition to accept the firmware */
  	if (strcasecmp(info->id, "ARCHER-C25-V1") == 0 ||
