@@ -81,15 +81,16 @@ firmwares/            - Folder where the final images end up
 $ git clone https://github.com/weimarnetz/firmware
 $ cd firmware
 // build all images for ar71xx
-$ make (+OpenWRT build flags i.e. -j$(nproc), V=s ...) 
+$ make (+OpenWRT build flags i.e. -j$(nproc), V=s ...)
+$ make TARGET=ar71xx PKG_LIST=weimarnetz -j$(nproc), V=s ...
 // build for x86
 $ make TARGET=x86
 // build for ramips_mt7268 
 $ make TARGET=ramips_mt7268
-// build a different package list 
+// build a different package list
 $ make PKG_LIST=weimarnetz_usbtether
-// look at debug messages, when building UML
-$ make TARGET=uml V=s 
+
+find your image in firmwares/xxx/branch/target/... 
 ...
 ``` 
 
