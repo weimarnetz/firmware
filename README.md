@@ -10,8 +10,6 @@ This is based on the firmware building code from [Freifunk Berlin](https://githu
 
 ## Images
 
-Successful builds may end up at http://weimarnetz.segfault.gq/firmwares
-
 ```
 :: Folder Structure
 
@@ -19,7 +17,8 @@ Successful builds may end up at http://weimarnetz.segfault.gq/firmwares
               ^         ^          ^
               |         |          | weimarnetz         - git master from weimarnetz
               |         |
-              |         | ar71xx   - most routers with Atheros SoCs
+              |         | ar71xx       - most routers with Atheros SoCs
+	      |		| ar71xx-tiny  - 4mb flash modells
               |         | ... 
               |         | x86      - 32bit x86 + vm images
               |         | uml      - user mode linux
@@ -39,7 +38,6 @@ Then use the OpenWRT buildsystem to build all packages and the Imagebuilder and 
 ## Dependencies 
 
 Only tested on Linux. 
-
 
 ```
 :: Debian / Ubuntu: 
@@ -81,8 +79,10 @@ firmwares/            - Folder where the final images end up
 $ git clone https://github.com/weimarnetz/firmware
 $ cd firmware
 // build all images for ar71xx
-$ make (+OpenWRT build flags i.e. -j$(nproc), V=s ...)
-$ make TARGET=ar71xx PKG_LIST=weimarnetz -j$(nproc), V=s ...
+// $ make (+OpenWRT build flags i.e. -j$(nproc), V=s ...)
+$ make TARGET=ar71xx PKG_LIST=weimarnetz -j$(nproc)
+// build all images for 4mb devices 
+$ make TARGET=ar71xx-tiny PKG_LIST=weimarnetz
 // build for x86
 $ make TARGET=x86
 // build for ramips_mt7268 
@@ -96,7 +96,7 @@ find your image in firmwares/xxx/branch/target/...
 
 ### UML 
 
-User Mode Linux is pretty great. It's basically a Linux kernel as an ELF-Binary. 
+User Mode Linux is basically a Linux kernel as an ELF-Binary. 
 
 ```
 $ make TARGET=uml -j$(nproc) 
@@ -193,7 +193,8 @@ You can now use the package name in the package list file.
 
 ## Adding a new router model to an existing architecture
 
-Everything that is in the [ToH](https://lede-project.org/toh/start) should work at least in theory. Wifi should be ath9k / ath10k. Mediatek Wifi is untested. 
+Everything that is in the [ToH](https://lede-project.org/toh/start) should work at least in theory. Wifi should be ath9k / ath10k. mt76 also appears to work. 
+
 You can use the Imagebuilder to get a list of all supported models for a platform. You can also look in the [source](https://git.lede-project.org/?p=source.git;a=tree;f=target/linux/ar71xx/image) for model names. 
 
 Just put the name in the `/profiles/<target>.profiles` and it should work. 
