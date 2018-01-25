@@ -18,7 +18,7 @@ This is based on the firmware building code from [Freifunk Berlin](https://githu
               |         |          | weimarnetz         - git master from weimarnetz
               |         |
               |         | ar71xx       - most routers with Atheros SoCs
-	      |		| ar71xx-tiny  - 4mb flash modells
+	      |		| ar71xx_tiny  - 4mb flash modells
               |         | ... 
               |         | x86      - 32bit x86 + vm images
               |         | uml      - user mode linux
@@ -82,11 +82,11 @@ $ cd firmware
 // $ make (+OpenWRT build flags i.e. -j$(nproc), V=s ...)
 $ make TARGET=ar71xx PKG_LIST=weimarnetz -j$(nproc)
 // build all images for 4mb devices 
-$ make TARGET=ar71xx-tiny PKG_LIST=weimarnetz
+$ make TARGET=ar71xx_tiny PKG_LIST=weimarnetz
 // build for x86
 $ make TARGET=x86
-// build for ramips_mt7268 
-$ make TARGET=ramips_mt7268
+// build for ramips_mt72x8 
+$ make TARGET=ramips_mt72x8
 // build a different package list
 $ make PKG_LIST=weimarnetz_usbtether
 
