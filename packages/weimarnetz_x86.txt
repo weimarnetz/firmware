@@ -51,5 +51,4 @@ kmod-sched-cake
 kmod-ifb
 sqm-scripts
 iw
-perl
 openssh-sftp-server
