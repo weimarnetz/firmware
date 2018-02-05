@@ -126,7 +126,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	$(eval TOOLCHAIN_PATH := $(shell printf "%s:" $(OPENWRT_DIR)/staging_dir/toolchain-*/bin))
 	$(eval IB_FILE := $(shell ls $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz))
 	mkdir -p $(FW_TARGET_DIR)
-	./assemble_firmware.sh -p "$(PROFILES)" -i $(IB_FILE) -t $(FW_TARGET_DIR) -u "$(PKG_LIST)"
+	$(FW_DIR)/assemble_firmware.sh -d -p "$(PROFILES)" -i $(IB_FILE) -t $(FW_TARGET_DIR) -u "$(PKG_LIST)"
 	# copy imagebuilder, sdk and toolchain (if existing)
 	cp $$(find $(OPENWRT_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
 	# copy packages
