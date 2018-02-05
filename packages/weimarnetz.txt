@@ -54,3 +54,6 @@ mtr
 tcpdump-mini
 iperf
 kmod-sched-cake
+
+# mdns
+ohybridproxy
