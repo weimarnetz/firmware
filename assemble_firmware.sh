@@ -168,6 +168,6 @@ for profile in $PROFILES ; do
 		# ensure BIN_DIR is valid
 		mkdir -p "${DEST_DIR}/${package_list}"
 
-		make -C "${TEMP_DIR}/$(ls ${TEMP_DIR}/)" image "PROFILE=$profile" "PACKAGES=$packages" "BIN_DIR=${DEST_DIR}/${package_list}" $img_params > /dev/null
+		make -C "${TEMP_DIR}/$(ls ${TEMP_DIR}/)" image "PROFILE=$profile" "PACKAGES=$packages" "BIN_DIR=${DEST_DIR}/${package_list}" $img_params V=s 
 	done
 done
