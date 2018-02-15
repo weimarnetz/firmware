@@ -1,4 +1,4 @@
-From 7e140cff76f99a7f81f431bbb3859b65bc8ea85c Mon Sep 17 00:00:00 2001
+From b8f4bb2919b0fddd64d368a72f7b0d09767648c9 Mon Sep 17 00:00:00 2001
 From: Henryk Heisig <hyniu@o2.pl>
 Date: Mon, 15 Jan 2018 06:44:14 +0100
 Subject: [PATCH] ar71xx: add support for Archer C60v2
@@ -45,7 +45,7 @@ Signed-off-by: Henryk Heisig <hyniu@o2.pl>
  target/linux/ar71xx/base-files/etc/board.d/01_leds |  3 +-
  .../linux/ar71xx/base-files/etc/board.d/02_network |  3 +-
  target/linux/ar71xx/base-files/etc/diag.sh         |  1 +
- .../etc/hotplug.d/firmware/11-ath10k-caldata       |  3 +-
+ .../etc/hotplug.d/firmware/11-ath10k-caldata       |  1 +
  .../etc/hotplug.d/ieee80211/10_fix_wifi_mac        |  3 +-
  target/linux/ar71xx/base-files/lib/ar71xx.sh       |  3 +
  .../ar71xx/base-files/lib/upgrade/platform.sh      |  1 +
@@ -58,13 +58,13 @@ Signed-off-by: Henryk Heisig <hyniu@o2.pl>
  target/linux/ar71xx/generic/config-default         |  1 +
  target/linux/ar71xx/image/generic-tp-link.mk       | 12 ++++
  tools/firmware-utils/src/tplink-safeloader.c       | 38 ++++++++++
- 16 files changed, 159 insertions(+), 5 deletions(-)
+ 16 files changed, 158 insertions(+), 4 deletions(-)
 
 diff --git a/target/linux/ar71xx/base-files/etc/board.d/01_leds b/target/linux/ar71xx/base-files/etc/board.d/01_leds
-index fac9dfa7ab..f2b9f49936 100755
+index a3154db7ed..4dbcdca73d 100755
 --- a/target/linux/ar71xx/base-files/etc/board.d/01_leds
 +++ b/target/linux/ar71xx/base-files/etc/board.d/01_leds
-@@ -76,7 +76,8 @@ archer-c7-v4)
+@@ -126,7 +126,8 @@ archer-c7)
  	;;
  archer-c58-v1|\
  archer-c59-v1|\
@@ -75,10 +75,10 @@ index fac9dfa7ab..f2b9f49936 100755
  	ucidef_set_led_netdev "wan" "WAN" "$board:green:wan" "eth0"
  	ucidef_set_led_wlan "wlan" "WLAN" "$board:green:wlan2g" "phy1tpt"
 diff --git a/target/linux/ar71xx/base-files/etc/board.d/02_network b/target/linux/ar71xx/base-files/etc/board.d/02_network
-index 5a10a9f486..81bd5082a8 100755
+index 435d413c63..03b7f6587c 100755
 --- a/target/linux/ar71xx/base-files/etc/board.d/02_network
 +++ b/target/linux/ar71xx/base-files/etc/board.d/02_network
-@@ -240,7 +240,8 @@ ar71xx_setup_interfaces()
+@@ -242,7 +242,8 @@ ar71xx_setup_interfaces()
  		ucidef_add_switch "switch0" \
  			"0@eth1" "1:lan:1" "2:lan:4" "3:lan:3" "4:lan:2"
  		;;
@@ -89,7 +89,7 @@ index 5a10a9f486..81bd5082a8 100755
  		ucidef_add_switch "switch0" \
  			"0@eth1" "1:lan:1" "2:lan:2" "3:lan:3" "4:lan:4"
 diff --git a/target/linux/ar71xx/base-files/etc/diag.sh b/target/linux/ar71xx/base-files/etc/diag.sh
-index 2720288e3d..942187fa99 100644
+index 2e9fd1d637..cac3aa34ba 100644
 --- a/target/linux/ar71xx/base-files/etc/diag.sh
 +++ b/target/linux/ar71xx/base-files/etc/diag.sh
 @@ -61,6 +61,7 @@ get_status_led() {
@@ -101,19 +101,17 @@ index 2720288e3d..942187fa99 100644
  	fritz300e|\
  	gl-usb150|\
 diff --git a/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata b/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
-index ccb041028a..a6a6a81018 100644
+index ca90563d25..4034df5c15 100644
 --- a/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
 +++ b/target/linux/ar71xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
-@@ -151,7 +151,8 @@ case "$FIRMWARE" in
- 	case $board in
+@@ -152,6 +152,7 @@ case "$FIRMWARE" in
  	archer-c58-v1|\
  	archer-c59-v1|\
--	archer-c60-v1)
-+	archer-c60-v1|\
-+	archer-c60-v2)
+ 	archer-c60-v1|\
++	archer-c60-v2|\
+ 	cf-e375ac)
  		ath10kcal_extract "art" 20480 12064
  		ln -sf /lib/firmware/ath10k/pre-cal-pci-0000\:00\:00.0.bin \
- 			/lib/firmware/ath10k/QCA9888/hw2.0/board.bin
 diff --git a/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac b/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
 index 0530d595a7..a763938ecd 100644
 --- a/target/linux/ar71xx/base-files/etc/hotplug.d/ieee80211/10_fix_wifi_mac
@@ -129,10 +127,10 @@ index 0530d595a7..a763938ecd 100644
  		;;
  	*)
 diff --git a/target/linux/ar71xx/base-files/lib/ar71xx.sh b/target/linux/ar71xx/base-files/lib/ar71xx.sh
-index b6642495de..9e4ad187a8 100755
+index 267c575545..af0ec53c7f 100755
 --- a/target/linux/ar71xx/base-files/lib/ar71xx.sh
 +++ b/target/linux/ar71xx/base-files/lib/ar71xx.sh
-@@ -467,6 +467,9 @@ ar71xx_board_detect() {
+@@ -470,6 +470,9 @@ ar71xx_board_detect() {
  	*"Archer C60 v1")
  		name="archer-c60-v1"
  		;;
@@ -143,7 +141,7 @@ index b6642495de..9e4ad187a8 100755
  		name="archer-c7"
  		;;
 diff --git a/target/linux/ar71xx/base-files/lib/upgrade/platform.sh b/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
-index 3d7b1593e1..d13f1b5efb 100755
+index 21e387389d..f76f046d41 100755
 --- a/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
 +++ b/target/linux/ar71xx/base-files/lib/upgrade/platform.sh
 @@ -202,6 +202,7 @@ platform_check_image() {
@@ -155,7 +153,7 @@ index 3d7b1593e1..d13f1b5efb 100755
  	bullet-m|\
  	c-55|\
 diff --git a/target/linux/ar71xx/config-4.4 b/target/linux/ar71xx/config-4.4
-index 8ecf7e1355..ecba45059a 100644
+index a952476f18..ce1997fa25 100644
 --- a/target/linux/ar71xx/config-4.4
 +++ b/target/linux/ar71xx/config-4.4
 @@ -55,6 +55,7 @@ CONFIG_ATH79=y
@@ -167,7 +165,7 @@ index 8ecf7e1355..ecba45059a 100644
  # CONFIG_ATH79_MACH_ARDUINO_YUN is not set
  # CONFIG_ATH79_MACH_AW_NR580 is not set
 diff --git a/target/linux/ar71xx/config-4.9 b/target/linux/ar71xx/config-4.9
-index 0e224ae1c4..fd15bccacd 100644
+index d0cfa462bf..41db5ee8d0 100644
 --- a/target/linux/ar71xx/config-4.9
 +++ b/target/linux/ar71xx/config-4.9
 @@ -53,6 +53,7 @@ CONFIG_ATH79=y
@@ -179,10 +177,10 @@ index 0e224ae1c4..fd15bccacd 100644
  # CONFIG_ATH79_MACH_ARDUINO_YUN is not set
  # CONFIG_ATH79_MACH_AW_NR580 is not set
 diff --git a/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt b/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
-index 3ca77550bc..03b1484c5f 100644
+index 20eb210105..25b7b2f8d6 100644
 --- a/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
 +++ b/target/linux/ar71xx/files/arch/mips/ath79/Kconfig.openwrt
-@@ -1443,6 +1443,16 @@ config ATH79_MACH_ARCHER_C60_V1
+@@ -1456,6 +1456,16 @@ config ATH79_MACH_ARCHER_C60_V1
  	select ATH79_DEV_M25P80
  	select ATH79_DEV_WMAC
  
@@ -200,7 +198,7 @@ index 3ca77550bc..03b1484c5f 100644
  	bool "TP-LINK Archer C5/C7/TL-WDR4900 v2 board support"
  	select SOC_QCA955X
 diff --git a/target/linux/ar71xx/files/arch/mips/ath79/Makefile b/target/linux/ar71xx/files/arch/mips/ath79/Makefile
-index e9f4d9852b..34781e204e 100644
+index 9be721ac20..b3b8aeee56 100644
 --- a/target/linux/ar71xx/files/arch/mips/ath79/Makefile
 +++ b/target/linux/ar71xx/files/arch/mips/ath79/Makefile
 @@ -63,6 +63,7 @@ obj-$(CONFIG_ATH79_MACH_ARCHER_C25_V1)		+= mach-archer-c25-v1.o
@@ -316,7 +314,7 @@ index 4d83fa737b..88f4f081a3 100644
 +MIPS_MACHINE(ATH79_MACH_ARCHER_C60_V2, "ARCHER-C60-V2",
 +	"TP-LINK Archer C60 v2", archer_c60_v2_setup);
 diff --git a/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h b/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
-index a621fe2c90..446733e28e 100644
+index 7434f340af..0944ea9518 100644
 --- a/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
 +++ b/target/linux/ar71xx/files/arch/mips/ath79/machtypes.h
 @@ -48,6 +48,7 @@ enum ath79_mach_type {
@@ -328,7 +326,7 @@ index a621fe2c90..446733e28e 100644
  	ATH79_MACH_ARCHER_C7_V2,		/* TP-LINK Archer C7 V2 board */
  	ATH79_MACH_ARCHER_C7_V4,		/* TP-LINK Archer C7 V4 board */
 diff --git a/target/linux/ar71xx/generic/config-default b/target/linux/ar71xx/generic/config-default
-index cac1a27c3b..50b0d1c36b 100644
+index 42df64d780..3759fd9654 100644
 --- a/target/linux/ar71xx/generic/config-default
 +++ b/target/linux/ar71xx/generic/config-default
 @@ -31,6 +31,7 @@ CONFIG_ATH79_MACH_ARCHER_C25_V1=y
