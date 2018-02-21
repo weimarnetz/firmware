@@ -34,6 +34,7 @@ default: firmwares
 $(OPENWRT_DIR):
 	git clone $(OPENWRT_SRC) $(OPENWRT_DIR)
 
+
 # clean up openwrt working copy
 openwrt-clean: stamp-clean-openwrt-cleaned .stamp-openwrt-cleaned
 .stamp-openwrt-cleaned: config.mk | $(OPENWRT_DIR) openwrt-clean-bin
@@ -64,6 +65,15 @@ $(OPENWRT_DIR)/dl:
 	mkdir $(FW_DIR)/dl || true && \
 	ln -s $(FW_DIR)/dl $@
 
+$(OPENWRT_DIR)/key_build:
+	test -e $(FW_DIR)/key_build && \
+		ln -s $(FW_DIR)/key_build $@ || \
+		true
+
+$(OPENWRT_DIR)/key_build.pub:
+	test -e $(FW_DIR)/key_build && \
+		ln -s $(FW_DIR)/key_build $@ || \
+		true
 # feeds
 $(OPENWRT_DIR)/feeds.conf: .stamp-openwrt-updated feeds.conf
 	cp $(FW_DIR)/feeds.conf $@

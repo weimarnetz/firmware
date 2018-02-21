@@ -6,3 +6,5 @@ bin
 firmwares
 dl
 build
+key_build
+key_build.pub
