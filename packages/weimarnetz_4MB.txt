@@ -10,9 +10,13 @@ kmod-ipt-nat
 dnsmasq
 -rpcd-mod-iwinfo
 -rpcd
--iw
+iw
 -odhcpd-ipv6only
 -odhcp6c
+-kmod-usb-core 
+-kmod-usb-ehci 
+-kmod-usb-ledtrig-usbport
+-kmod-usb2
 
 # GUI-basics
 uhttpd
