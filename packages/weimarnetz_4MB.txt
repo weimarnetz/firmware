@@ -8,13 +8,15 @@
 hostapd-mini
 kmod-ipt-nat
 dnsmasq
-rpcd-mod-iwinfo
-rpcd
-iw
+-rpcd-mod-iwinfo
+-rpcd
+-iw
+-odhcpd-ipv6only
+-odhcp6c
 
 # GUI-basics
 uhttpd
-uhttpd-mod-ubus
+-uhttpd-mod-ubus
 luci-mod-admin-full
 luci-mod-freifunk
 luci-app-olsr
