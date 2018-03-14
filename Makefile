@@ -40,7 +40,7 @@ openwrt-clean: stamp-clean-openwrt-cleaned .stamp-openwrt-cleaned
 .stamp-openwrt-cleaned: config.mk | $(OPENWRT_DIR) openwrt-clean-bin
 	cd $(OPENWRT_DIR); \
 	  ./scripts/feeds clean && \
-	  git clean -dff && git fetch && git reset --hard HEAD && \
+	  git clean -dff && git fetch --all && git reset --hard HEAD && \
 	  rm -rf .config feeds.conf build_dir/target-* logs/
 	touch $@
 
@@ -52,7 +52,7 @@ openwrt-update: stamp-clean-openwrt-updated .stamp-openwrt-updated
 .stamp-openwrt-updated: .stamp-openwrt-cleaned | $(OPENWRT_DIR)/dl
 	cd $(OPENWRT_DIR); \
 		git checkout master && \
-		git pull && \
+		git pull --all && \
 		git checkout $(OPENWRT_COMMIT)
 	touch $@
 
