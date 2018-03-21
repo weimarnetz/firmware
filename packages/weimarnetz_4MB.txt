@@ -3,13 +3,13 @@
 -ppp-mod-pppoe
 -wpad-mini
 -wpad 
--firewall
+firewall
 
 hostapd-mini
 kmod-ipt-nat
 dnsmasq
--rpcd-mod-iwinfo
--rpcd
+rpcd-mod-iwinfo
+rpcd
 iw
 -odhcpd-ipv6only
 -odhcp6c

@@ -3,7 +3,7 @@
 -ppp-mod-pppoe
 -wpad-mini
 -wpad 
--firewall
+firewall
 
 hostapd-mini
 kmod-ipt-nat
