@@ -1,4 +1,5 @@
 055-archer-c60-v2.patch
+056-cpe210v2.patch
 0007-mac80211-ath10k-allow-simultaneous-AP-IBSS.patch
 801-fragment-cache-size.patch
 201-luci-remove-freifunk-firewall.patch
