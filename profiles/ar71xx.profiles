@@ -5,6 +5,7 @@ archer-c60-v1:ct
 archer-c60-v2:ct
 cpe210-220-v1
 cpe510-520-v1
+cpe210-v2
 tl-wdr3500-v1
 tl-wdr3600-v1
 tl-wdr4300-v1
@@ -23,4 +24,4 @@ ubnt-nano-m-xw
 ubnt-nano-m
 ubnt-rocket-m-xw
 ubnt-rocket-m
-mc-mac1200r
+mc-mac1200r:ct
