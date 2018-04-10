@@ -8,7 +8,6 @@
 
 hostapd-mini
 kmod-ipt-nat
--kmod-ipt-offload
 dnsmasq
 rpcd-mod-iwinfo
 rpcd

@@ -10,7 +10,6 @@ kmod-ath10k-ct
 ath10k-firmware-qca9888-ct
 hostapd-mini
 kmod-ipt-nat
--kmod-ipt-offload
 dnsmasq
 rpcd-mod-iwinfo
 rpcd
