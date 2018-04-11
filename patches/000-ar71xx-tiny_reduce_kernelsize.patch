@@ -1,0 +1,19 @@
+commit 6e7fcb593a5cfadc37fa1c7ff31c57a64491e422
+Author: Sven Roederer <devel-sven@geroedel.de>
+Date:   Sun Apr 8 15:25:31 2018 +0200
+
+    ar71xx-tiny: deactivate CONFIG_PARTITION_EFI
+    
+    on this crappy hardware it's nearly impossible to add external drives, so
+    there seems no need for this partition-type.
+    this will safe some kernel-size
+
+diff --git a/target/linux/ar71xx/tiny/config-default b/target/linux/ar71xx/tiny/config-default
+index 2e9031a24c..130a9085b1 100644
+--- a/target/linux/ar71xx/tiny/config-default
++++ b/target/linux/ar71xx/tiny/config-default
+@@ -70,3 +70,4 @@ CONFIG_SOC_AR933X=y
+ CONFIG_SOC_AR934X=y
+ CONFIG_SOC_QCA953X=y
+ CONFIG_SOC_QCA956X=y
++CONFIG_PARTITION_ADVANCED=n
