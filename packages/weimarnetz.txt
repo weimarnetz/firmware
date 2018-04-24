@@ -7,6 +7,7 @@
 
 hostapd-mini
 kmod-ipt-nat
+kmod-ipt-conntrack
 dnsmasq
 rpcd-mod-iwinfo
 rpcd
