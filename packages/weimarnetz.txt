@@ -55,3 +55,4 @@ mtr
 tcpdump-mini
 iperf
 kmod-sched-cake
+strace
