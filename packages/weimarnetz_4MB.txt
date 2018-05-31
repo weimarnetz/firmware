@@ -54,4 +54,3 @@ resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
-data-weimar
