@@ -50,7 +50,6 @@ resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
-data-weimar
 
 # extra
 mtr
