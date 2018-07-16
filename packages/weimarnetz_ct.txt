@@ -4,8 +4,8 @@
 -wpad-mini
 -wpad 
 -firewall
--kmod-ath10k
-kmod-ath10k-ct
+kmod-ath10k
+-kmod-ath10k-ct
 -ath10k-firmware-qca9888
 ath10k-firmware-qca9888-ct
 hostapd-mini
@@ -55,4 +55,4 @@ weimarnetz-ffwizard
 mtr
 tcpdump-mini
 iperf
-kmod-sched-cake
+#kmod-sched-cake
