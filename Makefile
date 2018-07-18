@@ -18,7 +18,7 @@ FW_BRANCH=$(shell $(GIT_BRANCH))
 OPENWRT_DIR=$(FW_DIR)/build/$(FW_BRANCH)/openwrt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(TARGET)
+FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(MAINTARGET)/$(SUBTARGET)
 UMASK=umask 022
 
 # if any of the following files have been changed: clean up openwrt dir
