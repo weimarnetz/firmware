@@ -105,8 +105,8 @@ patch: stamp-clean-patched .stamp-patched
 # openwrt config
 $(OPENWRT_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
 	cat $(TARGET_CONFIG) >$(OPENWRT_DIR)/.config && \
-	sed -i '/^CONFIG_VERSION_NUMBER=/d' $(OPENWRT_DIR)/.config && \
-	echo "CONFIG_VERSION_NUMBER=$$FW_REVISION" >> $(OPENWRT_DIR)/.config
+	sed -i '/^CONFIG_VERSION_CODE=/d' $(OPENWRT_DIR)/.config && \
+	echo "CONFIG_VERSION_CODE=$$FW_REVISION" >> $(OPENWRT_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(OPENWRT_DIR) defconfig clean
 
