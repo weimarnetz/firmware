@@ -115,7 +115,6 @@ prepare: stamp-clean-prepared .stamp-prepared
 .stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config
 	# delete tmpinfo to make patches work
 	rm -rf $(OPENWRT_DIR)/tmp
-	sed -i 's,^# REVISION:=.*,REVISION:=$(FW_REVISION),g' $(OPENWRT_DIR)/include/version.mk
 	touch $@
 
 # compile
