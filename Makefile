@@ -18,7 +18,7 @@ FW_BRANCH=$(shell $(GIT_BRANCH))
 OPENWRT_DIR=$(FW_DIR)/build/$(FW_BRANCH)/openwrt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(TARGET)
+FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(MAINTARGET)/$(SUBTARGET)
 UMASK=umask 022
 
 # if any of the following files have been changed: clean up openwrt dir
@@ -105,8 +105,8 @@ patch: stamp-clean-patched .stamp-patched
 # openwrt config
 $(OPENWRT_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
 	cat $(TARGET_CONFIG) >$(OPENWRT_DIR)/.config && \
-	sed -i '/^CONFIG_VERSION_NUMBER=/d' $(OPENWRT_DIR)/.config && \
-	echo "CONFIG_VERSION_NUMBER=$$FW_REVISION" >> $(OPENWRT_DIR)/.config
+	sed -i '/^CONFIG_VERSION_CODE=/d' $(OPENWRT_DIR)/.config && \
+	echo "CONFIG_VERSION_CODE=$$FW_REVISION" >> $(OPENWRT_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(OPENWRT_DIR) defconfig clean
 
@@ -115,7 +115,6 @@ prepare: stamp-clean-prepared .stamp-prepared
 .stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config
 	# delete tmpinfo to make patches work
 	rm -rf $(OPENWRT_DIR)/tmp
-	sed -i 's,^# REVISION:=.*,REVISION:=$(FW_REVISION),g' $(OPENWRT_DIR)/include/version.mk
 	touch $@
 
 # compile
