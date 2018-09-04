@@ -53,5 +53,4 @@ weimarnetz-ffwizard
 tcpdump-mini
 iperf
 kmod-sched-cake
-mtr
 strace
