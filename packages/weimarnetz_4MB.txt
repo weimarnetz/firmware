@@ -5,6 +5,7 @@
 -wpad 
 -firewall
 -opkg
+-wpad-basic
 
 hostapd-mini
 kmod-ipt-nat

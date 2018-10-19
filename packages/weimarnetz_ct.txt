@@ -2,7 +2,8 @@
 -ppp
 -ppp-mod-pppoe
 -wpad-mini
--wpad 
+-wpad
+-wpad-basic
 -firewall
 -kmod-ath10k
 kmod-ath10k-ct
