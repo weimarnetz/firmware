@@ -4,6 +4,7 @@
 -wpad-mini
 -wpad 
 -firewall
+-wpad-basic
 
 hostapd-mini
 kmod-ipt-nat
@@ -50,7 +51,6 @@ resolveip
 weimarnetz-ffwizard
 
 # extra
-mtr
 tcpdump-mini
 iperf
 kmod-sched-cake
