@@ -50,7 +50,7 @@ weimarnetz-ffwizard
 data-weimar
 
 # extra
-mtr
+# mtr
 tcpdump-mini
 iperf
 kmod-sched-cake

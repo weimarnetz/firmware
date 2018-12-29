@@ -10,7 +10,7 @@ hostapd-mini
 kmod-ipt-nat
 
 # Common
-mtr
+# mtr
 iperf
 dnsmasq
 #iwinfo
