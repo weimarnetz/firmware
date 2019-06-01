@@ -24,6 +24,9 @@ iw
 # GUI-basics
 owsd 
 
+#
+luci-lib-httpclient
+
 # OLSR
 olsrd
 olsrd-mod-arprefresh

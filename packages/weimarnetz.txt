@@ -16,7 +16,10 @@ iw
 tc 
 
 # GUI-basics
-owsd 
+owsd
+
+# registrator 
+luci-lib-httpclient
 
 # OLSR
 olsrd
