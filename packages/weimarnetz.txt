@@ -49,6 +49,7 @@ resolveip
 
 # Weimarnetz
 weimarnetz-ffwizard
+luci-app-weimarnetz
 
 # extra
 tcpdump-mini

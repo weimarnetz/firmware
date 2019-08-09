@@ -46,7 +46,7 @@ vtun
 
 # Weimarnetz
 weimarnetz-ffwizard
-#luci-app-weimarnetz
+luci-app-weimarnetz
 kmod-sched-cake
 kmod-ifb
 sqm-scripts
