@@ -54,4 +54,5 @@ vtun
 resolveip
 
 # Weimarnetz
+luci-app-weimarnetz
 weimarnetz-ffwizard

@@ -55,4 +55,3 @@ luci-app-weimarnetz
 tcpdump-mini
 iperf
 kmod-sched-cake
-strace
