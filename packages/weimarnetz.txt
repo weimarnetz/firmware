@@ -1,8 +1,8 @@
 -kmod-ppp
 -ppp
 -ppp-mod-pppoe
-wpad-mini
--wpad 
+-wpad-mini
+wpad 
 -firewall
 -wpad-basic
 
