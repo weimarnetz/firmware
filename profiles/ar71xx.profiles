@@ -1,9 +1,9 @@
-archer-c7-v1:ct
-archer-c7-v2:ct
-archer-c7-v5:ct
+archer-c7-v1
+archer-c7-v2
+archer-c7-v5
 archer-c59-v1
-archer-c60-v1:ct
-archer-c60-v2:ct
+archer-c60-v1
+archer-c60-v2
 archer-c60-v2
 cpe210-220-v1
 cpe510-520-v1
@@ -27,4 +27,4 @@ ubnt-nano-m
 ubnt-rocket-m-xw
 ubnt-rocket-m
 ubnt-unifiac-mesh
-mc-mac1200r:ct
+mc-mac1200r
