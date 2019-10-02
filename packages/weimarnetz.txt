@@ -2,7 +2,7 @@
 -ppp
 -ppp-mod-pppoe
 -wpad-mini
-wpad 
+wpad-mesh-wolfssl 
 -firewall
 -wpad-basic
 
