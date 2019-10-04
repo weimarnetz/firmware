@@ -9,6 +9,7 @@ wpad-mesh-wolfssl
 -hostapd-mini
 kmod-ipt-nat
 kmod-ipt-conntrack
+iptables-mod-ipopt
 dnsmasq
 rpcd-mod-iwinfo
 rpcd

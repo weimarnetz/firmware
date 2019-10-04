@@ -10,6 +10,7 @@
 hostapd-mini
 kmod-ipt-nat
 kmod-ipt-conntrack
+iptables-mod-ipopt
 dnsmasq
 rpcd-mod-iwinfo
 rpcd
@@ -23,7 +24,7 @@ iw
 
 # GUI-basics
 uhttpd
--uhttpd-mod-ubus
+uhttpd-mod-ubus
 luci-mod-admin-full
 luci-mod-freifunk
 luci-app-olsr
@@ -56,3 +57,5 @@ resolveip
 # Weimarnetz
 luci-app-weimarnetz
 weimarnetz-ffwizard
+#kmod-sched-cake
+#tc
