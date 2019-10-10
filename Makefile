@@ -114,7 +114,7 @@ $(OPENWRT_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
 
 # prepare openwrt working copy
 prepare: stamp-clean-prepared .stamp-prepared
-.stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config $(OPENWRT_DIR)/files
+.stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config 
 	touch $@
 
 # compile
