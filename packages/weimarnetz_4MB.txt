@@ -6,15 +6,17 @@
 -firewall
 -opkg
 -wpad-basic
-
 hostapd-mini
+kmod-sched-cake
 kmod-ipt-nat
 kmod-ipt-conntrack
+hostapd-mini
 iptables-mod-ipopt
 dnsmasq
 rpcd-mod-iwinfo
 rpcd
 iw
+tc
 -odhcpd-ipv6only
 -odhcp6c
 -kmod-usb-core 
@@ -25,6 +27,18 @@ iw
 # GUI-basics
 uhttpd
 uhttpd-mod-ubus
+# OLSR
+olsrd
+olsrd-mod-arprefresh
+olsrd-mod-jsoninfo
+olsrd-mod-txtinfo
+olsrd-mod-nameservice
+olsrd-mod-watchdog
+olsrd-mod-dyn-gw
+
+# VPN
+vtun 
+resolveip
 luci-mod-admin-full
 luci-mod-freifunk
 luci-app-olsr
@@ -41,21 +55,6 @@ luci-i18n-olsr-en
 luci-i18n-freifunk-de
 luci-i18n-freifunk-en
 
-# OLSR
-olsrd
-olsrd-mod-arprefresh
-olsrd-mod-jsoninfo
-olsrd-mod-txtinfo
-olsrd-mod-nameservice
-olsrd-mod-watchdog
-olsrd-mod-dyn-gw
-
-# VPN
-vtun 
-resolveip
-
 # Weimarnetz
 luci-app-weimarnetz
 weimarnetz-ffwizard
-kmod-sched-cake
-tc
