@@ -1,3 +1,4 @@
+0000-mac80211-improved-ratecontrol.patch
 000-ar71xx-tiny_reduce_kernelsize.patch
 0007-mac80211-ath10k-allow-simultaneous-AP-IBSS.patch
 201-luci-remove-freifunk-firewall.patch
