@@ -57,5 +57,5 @@ resolveip
 # Weimarnetz
 luci-app-weimarnetz
 weimarnetz-ffwizard
-#kmod-sched-cake
-#tc
+kmod-sched-cake
+tc
