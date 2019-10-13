@@ -6,6 +6,8 @@
 -firewall
 -opkg
 -wpad-basic
+-usign
+-openwrt-keyring
 hostapd-mini
 kmod-sched-cake
 kmod-ipt-nat
@@ -39,7 +41,7 @@ olsrd-mod-dyn-gw
 # VPN
 vtun 
 resolveip
-luci-mod-admin-full
+luci-mod-admin-mini
 luci-mod-freifunk
 luci-app-olsr
 luci-app-olsr-services
