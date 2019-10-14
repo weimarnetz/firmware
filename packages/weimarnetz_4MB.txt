@@ -41,7 +41,7 @@ olsrd-mod-dyn-gw
 # VPN
 vtun 
 resolveip
-luci-mod-admin-mini
+luci-mod-admin-full
 luci-mod-freifunk
 luci-app-olsr
 luci-app-olsr-services
