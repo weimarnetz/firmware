@@ -7,7 +7,7 @@
 -opkg
 -wpad-basic
 hostapd-mini
-kmod-sched-cake
+#kmod-sched-cake
 kmod-ipt-nat
 kmod-ipt-conntrack
 hostapd-mini
@@ -16,7 +16,7 @@ dnsmasq
 rpcd-mod-iwinfo
 rpcd
 iw
-tc
+#tc
 -odhcpd-ipv6only
 -odhcp6c
 -kmod-usb-core 
@@ -48,12 +48,12 @@ luci-app-owm-cmd
 luci-theme-bootstrap
 libiwinfo-lua
 # GUI addon
-#luci-i18n-base-de
-#luci-i18n-base-en
-#luci-i18n-olsr-de
-#luci-i18n-olsr-en
-#luci-i18n-freifunk-de
-#luci-i18n-freifunk-en
+luci-i18n-base-de
+luci-i18n-base-en
+luci-i18n-olsr-de
+luci-i18n-olsr-en
+luci-i18n-freifunk-de
+luci-i18n-freifunk-en
 
 # Weimarnetz
 luci-app-weimarnetz
