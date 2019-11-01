@@ -3,5 +3,5 @@ SHELL:=$(shell which bash)
 TARGET=ar71xx
 PKG_LIST=weimarnetz
 OPENWRT_SRC=git://git.openwrt.org/openwrt/openwrt.git
-OPENWRT_COMMIT=6f1a71c2d08ac072541c7da9eb029b418970c09b
+OPENWRT_COMMIT=e70772311d0c055ef59f799e9ca3497c37b4464f
 MAKE_ARGS=
