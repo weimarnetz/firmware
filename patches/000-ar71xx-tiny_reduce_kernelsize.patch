@@ -8,12 +8,16 @@ Date:   Sun Apr 8 15:25:31 2018 +0200
     there seems no need for this partition-type.
     this will safe some kernel-size
 
-diff --git a/target/linux/ar71xx/tiny/config-default b/target/linux/ar71xx/tiny/config-default
-index 2e9031a24c..130a9085b1 100644
---- a/target/linux/ar71xx/tiny/config-default
-+++ b/target/linux/ar71xx/tiny/config-default
-@@ -70,3 +70,4 @@ CONFIG_SOC_AR933X=y
+Index: openwrt/target/linux/ar71xx/tiny/config-default
+===================================================================
+--- openwrt.orig/target/linux/ar71xx/tiny/config-default
++++ openwrt/target/linux/ar71xx/tiny/config-default
+@@ -74,3 +74,4 @@ CONFIG_SOC_AR933X=y
  CONFIG_SOC_AR934X=y
  CONFIG_SOC_QCA953X=y
  CONFIG_SOC_QCA956X=y
 +CONFIG_PARTITION_ADVANCED=n
++CONFIG_BLK_MQ_PCI=n
++CONFIG_BPF=n 
++CONFIG_BPF_SYSCALL=n
+

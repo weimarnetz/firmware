@@ -1,1 +1,2 @@
 000-ar71xx-tiny_reduce_kernelsize.patch
+000-ath79-tiny_reduce_kernelsize.patch

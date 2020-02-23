@@ -1,0 +1,12 @@
+Index: openwrt/target/linux/ath79/tiny/config-default
+===================================================================
+--- openwrt.orig/target/linux/ath79/tiny/config-default
++++ openwrt/target/linux/ath79/tiny/config-default
+@@ -16,3 +16,7 @@ CONFIG_PHY_AR7100_USB=y
+ CONFIG_PHY_AR7200_USB=y
+ CONFIG_REGULATOR=y
+ CONFIG_REGULATOR_FIXED_VOLTAGE=y
++CONFIG_PARTITION_ADVANCED=n
++CONFIG_BLK_MQ_PCI=n
++CONFIG_BPF=n 
++CONFIG_BPF_SYSCALL=n
