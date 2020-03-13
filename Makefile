@@ -10,7 +10,7 @@ endif
 
 GIT_REPO=git config --get remote.origin.url
 GIT_BRANCH=git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,'
-REVISION=git describe --always --dirty
+REVISION=git describe --always --dirty --tags
 # set dir and file names
 FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
@@ -96,25 +96,25 @@ pre-patch: stamp-clean-pre-patch .stamp-pre-patch
 patch: stamp-clean-patched .stamp-patched
 .stamp-patched: .stamp-pre-patch
 	cd $(OPENWRT_DIR); quilt push -a || ( [ $$? -eq 2 ] && true )
+	rm -rf $(OPENWRT_DIR)/tmp
 	touch $@
 
 .stamp-build_rev: .FORCE
 	$(eval FW_REVISION := $(FW_REVISION)+openwrt-$(shell cd $(OPENWRT_DIR); ./scripts/getver.sh))
+	echo ${FW_REVISION}
 	touch $@
 
 # openwrt config
 $(OPENWRT_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
+	echo ${FW_REVISION}
 	cat $(TARGET_CONFIG) >$(OPENWRT_DIR)/.config && \
-	sed -i '/^CONFIG_VERSION_CODE=/d' $(OPENWRT_DIR)/.config && \
-	echo "CONFIG_VERSION_CODE=$$FW_REVISION" >> $(OPENWRT_DIR)/.config
+        sed -i "/^CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$(FW_REVISION)\"" $(OPENWRT_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(OPENWRT_DIR) defconfig clean
 
 # prepare openwrt working copy
 prepare: stamp-clean-prepared .stamp-prepared
-.stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config
-	# delete tmpinfo to make patches work
-	rm -rf $(OPENWRT_DIR)/tmp
+.stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config 
 	touch $@
 
 # compile
@@ -155,6 +155,7 @@ stamp-clean:
 unpatch: $(OPENWRT_DIR)/patches
 # RC = 2 of quilt --> nothing to be done
 	cd $(OPENWRT_DIR); quilt pop -a -f || [ $$? = 2 ] && true
+	rm -rf $(OPENWRT_DIR)/tmp
 	rm -f .stamp-patched
 
 clean: stamp-clean .stamp-openwrt-cleaned

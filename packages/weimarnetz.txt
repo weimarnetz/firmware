@@ -2,13 +2,14 @@
 -ppp
 -ppp-mod-pppoe
 -wpad-mini
--wpad 
+wpad-mesh-wolfssl 
 -firewall
 -wpad-basic
 
-hostapd-mini
+-hostapd-mini
 kmod-ipt-nat
 kmod-ipt-conntrack
+iptables-mod-ipopt
 dnsmasq
 rpcd-mod-iwinfo
 rpcd
