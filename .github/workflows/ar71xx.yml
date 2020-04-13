@@ -34,12 +34,12 @@ jobs:
         sudo -E apt-get -qq clean
 
     # Build firmware for ar71xx target
-    # - name: Build ar71xx target
-    #  run: make TARGET=ar71xx PKG_LIST=weimarnetz -j$(nproc)
+    - name: Build ar71xx target
+      run: make TARGET=ar71xx PKG_LIST=weimarnetz -j$(nproc)
     - name: upload
       env:
         SSH_KEY: ${{ secrets.BUILDBOT_PRIVATE_KEY }}
       run: |
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${SSH_KEY}"
-        rsync -avz '-e ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key -p22223' README.md buildbot@buildbot.weimarnetz.de:/brauhaus
+        rsync -avz '-e ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key -p22223' firmwares/ buildbot@buildbot.weimarnetz.de:/brauhaus
