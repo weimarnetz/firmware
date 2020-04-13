@@ -41,4 +41,5 @@ jobs:
         SSH_KEY: ${secrets.BUILDBOT_PRIVATE_KEY}
       run: |
         echo $SSH_KEY >> /tmp/ssh_key
+        chmod 0600 /tmp/ssh_key
         rsync -avz '-e ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key -p22223' README.md buildbot@buildbot.weimarnetz.de:/brauhaus
