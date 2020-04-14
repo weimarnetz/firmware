@@ -1,5 +1,7 @@
 # Freifunk Weimar Firmware Builder
 
+![Weimarnetz firmware build](https://github.com/weimarnetz/firmware/workflows/Weimarnetz%20firmware%20build/badge.svg)
+
 *Work in Progress* 
 
 Builds Images with Freifunk Firmware :)
