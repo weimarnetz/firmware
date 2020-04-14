@@ -28,7 +28,7 @@ jobs:
       with:
         ref: brauhaus
     - run: |
-        git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+        git fetch --prune --unshallow
     
     - name: Initialization environment
       env:
