@@ -1,0 +1,55 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Weimarnetz firmware build
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ brauhaus ]
+  pull_request:
+    branches: [ brauhaus ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    strategy:
+      matrix:
+        target: [ar71xx, ar71xx_tiny, mpc85xx, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86, x86_64, ipq40xx]
+      fail-fast: false
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+      with:
+        ref: brauhaus
+    - run: |
+        git fetch --prune --unshallow
+    
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo swapoff /swapfile
+        sudo rm -rf /swapfile /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install sudo openssh-server rsync git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync 
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean
+
+    # Build firmware for ar71xx target
+    - name: Build ar71xx target
+      run: |
+        make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j$(nproc)
+    - name: upload
+      if: github.event_name == 'push'
+      env:
+        SSH_KEY: ${{ secrets.BUILDBOT_PRIVATE_KEY }}
+      run: |
+        eval "$(ssh-agent -s)"
+        ssh-add - <<< "${SSH_KEY}"
+        rsync -avz '-e ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key -p22223' firmwares/ buildbot@buildbot.weimarnetz.de:/brauhaus
