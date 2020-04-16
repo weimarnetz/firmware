@@ -52,4 +52,4 @@ jobs:
       run: |
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${SSH_KEY}"
-        rsync -avz '-e ssh -o StrictHostKeyChecking=no -i /tmp/ssh_key -p22223' firmwares/ buildbot@buildbot.weimarnetz.de:/brauhaus
+        rsync -avz '-e ssh -o StrictHostKeyChecking=no' firmwares/ buildbot@buildbot.weimarnetz.de:/brauhaus
