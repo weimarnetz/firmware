@@ -6,9 +6,9 @@ name: Weimarnetz firmware build
 # events but only for the master branch
 on:
   push:
-    branches: [ brauhaus ]
+    branches: [ brauhaus-19.07 ]
   pull_request:
-    branches: [ brauhaus ]
+    branches: [ brauhaus-19.07 ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
