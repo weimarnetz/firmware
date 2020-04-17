@@ -26,7 +26,7 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
       with:
-        ref: brauhaus
+        ref: brauhaus-19.07
     - run: |
         git fetch --prune --unshallow
     
