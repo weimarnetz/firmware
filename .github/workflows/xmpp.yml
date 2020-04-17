@@ -20,12 +20,10 @@ jobs:
         if: github.event_name == 'push'
         with: # Set the secrets as inputs
           # jid expects the bot's bare jid (user@domain)
-          # jid: ${{ secrets.jid }}
-          jid: ghactions@anon.jabber.weimarnetz.de
-          # password: ${{ secrets.password }}
-          password: random
+          jid: ${{ secrets.XMPP_JID }}
+          password: ${{ secrets.XMPP_PW }}
           # server_host: ${{ secrets.server_host }}
-          server_host: anon.jabber.weimarnetz.de
+          server_host: jabber.weimarnetz.de
           # Intended recipient of the notification such as a room or single user. Bare JID expected.
           # recipient: ${{ secrets.recipient }}
           recipient: freifunk@conference.jabber.weimarnetz.de
