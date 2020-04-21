@@ -1,6 +1,7 @@
 # Freifunk Weimar Firmware Builder
 
-![Weimarnetz firmware build](https://github.com/weimarnetz/firmware/workflows/Weimarnetz%20firmware%20build/badge.svg?branch=brauhaus-19.07)
+![Weimarnetz 18.06 build](https://github.com/weimarnetz/firmware/workflows/Weimarnetz%20firmware%20build/badge.svg?branch=brauhaus)
+![Weimarnetz 19.07 build](https://github.com/weimarnetz/firmware/workflows/Weimarnetz%20firmware%20build/badge.svg?branch=brauhaus-19.07)
 
 *Work in Progress* 
 
