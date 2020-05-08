@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Weimarnetz Firmware Build
+name: Weimarnetz Legacy Firmware Build
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
