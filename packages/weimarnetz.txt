@@ -25,7 +25,7 @@ luci-app-olsr
 luci-app-olsr-services
 luci-app-owm
 luci-app-owm-cmd
-luci-theme-openwrt2020
+luci-theme-openwrt-2020
 libiwinfo-lua
 # GUI addon
 luci-i18n-base-de
