@@ -4,10 +4,6 @@ include config.mk
 MAINTARGET=$(word 1, $(subst _, ,$(TARGET)))
 SUBTARGET=$(word 2, $(subst _, ,$(TARGET)))
 
-ifeq ($(strip $(SUBTARGET)),)
-	SUBTARGET:=generic
-endif
-
 GIT_REPO=git config --get remote.origin.url
 GIT_BRANCH=git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,'
 REVISION=git describe --always --dirty --tags
@@ -15,14 +11,20 @@ REVISION=git describe --always --dirty --tags
 FW_DIR=$(shell pwd)
 FW_REVISION=$(shell $(REVISION))
 FW_BRANCH=$(shell $(GIT_BRANCH))
-OPENWRT_DIR=$(FW_DIR)/build/$(FW_BRANCH)/openwrt
+OPENWRT_DIR=$(FW_DIR)/openwrt
+VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
 FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(MAINTARGET)/$(SUBTARGET)
 UMASK=umask 022
 
+# test for existing $TARGET-config or abort
+ifeq ($(wildcard $(FW_DIR)/configs/$(TARGET).config),)
+$(error config for $(TARGET) not defined)
+endif
+
 # if any of the following files have been changed: clean up openwrt dir
-DEPS=$(TARGET_CONFIG) feeds.conf patches $(wildcard patches/*)
+DEPS=$(TARGET_CONFIG) modules patches $(wildcard patches/*)
 
 # profiles to be built (router models)
 PROFILES?=$(shell cat $(FW_DIR)/profiles/$(TARGET).profiles)
@@ -30,10 +32,28 @@ PROFILES?=$(shell cat $(FW_DIR)/profiles/$(TARGET).profiles)
 
 default: firmwares
 
-# clone openwrt 
-$(OPENWRT_DIR):
-	git clone $(OPENWRT_SRC) $(OPENWRT_DIR)
+## Gluon - Begin
+# compatibility to Gluon.buildsystem
+# * setup required makros and variables
+# * create the modules-file from config.mk and feeds.conf
 
+# check for spaces & resolve possibly relative paths
+define mkabspath
+   ifneq (1,$(words [$($(1))]))
+     $$(error $(1) must not contain spaces)
+   endif
+   override $(1) := $(abspath $($(1)))
+endef
+
+# initialize (possibly already user set) directory variables
+GLUON_TMPDIR ?= tmp
+GLUON_PATCHESDIR ?= patches
+
+$(eval $(call mkabspath,GLUON_TMPDIR))
+$(eval $(call mkabspath,GLUON_PATCHESDIR))
+
+export GLUON_TMPDIR GLUON_PATCHESDIR
+## Gluon - End
 
 # clean up openwrt working copy
 openwrt-clean: stamp-clean-openwrt-cleaned .stamp-openwrt-cleaned
@@ -46,57 +66,24 @@ openwrt-clean: stamp-clean-openwrt-cleaned .stamp-openwrt-cleaned
 
 openwrt-clean-bin:
 	rm -rf $(OPENWRT_DIR)/bin
-
-# update openwrt and checkout specified commit
-openwrt-update: stamp-clean-openwrt-updated .stamp-openwrt-updated
-.stamp-openwrt-updated: .stamp-openwrt-cleaned | $(OPENWRT_DIR)/dl
-	cd $(OPENWRT_DIR); \
-		git checkout master && \
-		git pull --all && \
-		git checkout $(OPENWRT_COMMIT)
-	touch $@
-
-# patches require updated openwrt working copy
-$(OPENWRT_DIR)/patches: | .stamp-openwrt-updated
-	ln -s $(FW_DIR)/patches $@
-
-# symlink download folder 
-$(OPENWRT_DIR)/dl:
-	mkdir $(FW_DIR)/dl || true && \
-	ln -s $(FW_DIR)/dl $@
-
-$(OPENWRT_DIR)/key-build:
-	test -e $(FW_DIR)/key-build && \
-		ln -s $(FW_DIR)/key-build $@ || \
-		true
-
-$(OPENWRT_DIR)/key-build.pub:
-	test -e $(FW_DIR)/key-build && \
-		ln -s $(FW_DIR)/key-build $@ || \
-		true
-# feeds
-$(OPENWRT_DIR)/feeds.conf: .stamp-openwrt-updated feeds.conf
-	cp $(FW_DIR)/feeds.conf $@
+	rm -rf $(OPENWRT_DIR)/build_dir/target-*/*-{imagebuilder,sdk}-*
 
 # update feeds
 feeds-update: stamp-clean-feeds-updated .stamp-feeds-updated
-.stamp-feeds-updated: $(OPENWRT_DIR)/feeds.conf unpatch
-	+cd $(OPENWRT_DIR); \
-	  ./scripts/feeds uninstall -a && \
-	  ./scripts/feeds update && \
-	  ./scripts/feeds install -a
+.stamp-feeds-updated: .stamp-patched
+	@$(UMASK); GLUON_SITEDIR='$(GLUON_SITEDIR)' FOREIGN_BUILD=1 scripts/feeds.sh
 	touch $@
 
 # prepare patch
 pre-patch: stamp-clean-pre-patch .stamp-pre-patch
-.stamp-pre-patch: .stamp-feeds-updated $(wildcard $(FW_DIR)/patches/*) | $(OPENWRT_DIR)/patches
+.stamp-pre-patch: $(FW_DIR)/modules
+	@GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/update.sh
 	touch $@
 
-# patch openwrt working copy
+# patch openwrt and feeds working copy
 patch: stamp-clean-patched .stamp-patched
-.stamp-patched: .stamp-pre-patch
-	cd $(OPENWRT_DIR); quilt push -a || ( [ $$? -eq 2 ] && true )
-	rm -rf $(OPENWRT_DIR)/tmp
+.stamp-patched: .stamp-pre-patch $(wildcard $(GLUON_PATCHESDIR)/openwrt/*) $(wildcard $(GLUON_PATCHESDIR)/packages/*/*)
+	@$(UMASK); GLUON_SITEDIR='$(GLUON_SITEDIR)' scripts/patch.sh
 	touch $@
 
 .stamp-build_rev: .FORCE
@@ -104,17 +91,29 @@ patch: stamp-clean-patched .stamp-patched
 	echo ${FW_REVISION}
 	touch $@
 
+# share download dir
+$(FW_DIR)/dl:
+	mkdir $(FW_DIR)/dl
+$(OPENWRT_DIR)/dl: $(FW_DIR)/dl
+	ln -s $(FW_DIR)/dl $(OPENWRT_DIR)/dl
+
+# create embedded-files/ and make it avail to openwrt
+$(FW_DIR)/embedded-files:
+	mkdir $@
+$(OPENWRT_DIR)/files: $(FW_DIR)/embedded-files
+	ln -s $(FW_DIR)/embedded-files $(OPENWRT_DIR)/files
+
 # openwrt config
-$(OPENWRT_DIR)/.config: .stamp-patched $(TARGET_CONFIG) .stamp-build_rev
+$(OPENWRT_DIR)/.config: .stamp-feeds-updated $(TARGET_CONFIG) .stamp-build_rev $(OPENWRT_DIR)/dl
 	echo ${FW_REVISION}
 	cat $(TARGET_CONFIG) >$(OPENWRT_DIR)/.config && \
-        sed -i "/^CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$(FW_REVISION)\"" $(OPENWRT_DIR)/.config
+	sed -i "/^CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$(FW_REVISION)\"" $(OPENWRT_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(OPENWRT_DIR) defconfig clean
 
 # prepare openwrt working copy
 prepare: stamp-clean-prepared .stamp-prepared
-.stamp-prepared: .stamp-patched $(OPENWRT_DIR)/.config 
+.stamp-prepared: .stamp-feeds-updated $(OPENWRT_DIR)/.config $(OPENWRT_DIR)/files
 	touch $@
 
 # compile
@@ -125,41 +124,131 @@ compile: stamp-clean-compiled .stamp-compiled
 	touch $@
 
 # fill firmwares-directory with:
-#  * firmwares built with imagebuilder
 #  * imagebuilder file
 #  * packages directory
+#  * firmware-images are already in place (target images)
 firmwares: stamp-clean-firmwares .stamp-firmwares
-.stamp-firmwares: .stamp-compiled
-	rm -rf $(IB_BUILD_DIR)
-	mkdir -p $(IB_BUILD_DIR)
-	$(eval TOOLCHAIN_PATH := $(shell printf "%s:" $(OPENWRT_DIR)/staging_dir/toolchain-*/bin))
-	$(eval IB_FILE := $(shell ls $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz))
-	mkdir -p $(FW_TARGET_DIR)
-	$(FW_DIR)/assemble_firmware.sh -d -p "$(PROFILES)" -i $(IB_FILE) -t $(FW_TARGET_DIR) -u "$(PKG_LIST)"
+.stamp-firmwares: .stamp-images $(VERSION_FILE) .stamp-initrd
 	# copy imagebuilder, sdk and toolchain (if existing)
-	cp $$(find $(OPENWRT_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
+	# remove old versions
+	rm -f $(FW_TARGET_DIR)/*.tar.xz
+	for file in $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*{imagebuilder,sdk,toolchain}*.tar.xz; do \
+		if [ -e $$file ]; then mv $$file $(FW_TARGET_DIR)/ ; fi \
+	done
 	# copy packages
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
 	cd $(OPENWRT_DIR)/bin; \
-		rsync -avR $$(find targets -name packages -type d) $$PACKAGES_DIR; \
-		rsync -avr packages $$PACKAGES_DIR
+	rm -rf $$PACKAGES_DIR; \
+	mkdir -p $$PACKAGES_DIR/targets/$(MAINTARGET)/$(SUBTARGET)/packages; \
+	cp -a $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/packages/* $$PACKAGES_DIR/targets/$(MAINTARGET)/$(SUBTARGET)/packages; \
+	# e.g. packages/packages/mips_34k the doublicated packages is correct! \
+	cp -a $(OPENWRT_DIR)/bin/packages $$PACKAGES_DIR/
 	touch $@
+
+initrd: .stamp-initrd
+.stamp-initrd: .stamp-compiled
+	$(eval TARGET_BINDIR := $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET))
+	$(eval INITRD_DIR := $(FW_TARGET_DIR)/initrd)
+	[ -d $(INITRD_DIR) ] || mkdir -p $(INITRD_DIR)
+	# remove old versions
+	
+	rm -f $(INITRD_DIR)/*
+	# copy initrd images (if existing)
+	for file in $(TARGET_BINDIR)/*-vmlinux-initramfs.elf; do \
+	  if [ -e $$file ]; then mv $$file $(INITRD_DIR)/ ; fi \
+	done
+	for profile in `cat profiles/$(MAINTARGET)-$(SUBTARGET).profiles`; do \
+	  if [ -e $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin ]; then mv $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin $(INITRD_DIR)/ ; fi \
+	done
+	touch $@
+
+$(VERSION_FILE): .stamp-prepared
+	mkdir -p $(FW_TARGET_DIR)
+	# Create version info file
+	GIT_BRANCH_ESC=$(shell $(GIT_BRANCH) | tr '/' '_'); \
+	echo "https://github.com/weimarnetz/firmware" > $(VERSION_FILE); \
+	echo "http://buildbot.weimarnetz.de/builds" >> $(VERSION_FILE); \
+	echo "Firmware: git branch \"$$GIT_BRANCH_ESC\", revision $(FW_REVISION)" >> $(VERSION_FILE); \
+	# add openwrt revision with data from config.mk \
+	OPENWRT_REVISION=`cd $(OPENWRT_DIR); $(REVISION)`; \
+	echo "OpenWRT: repository from $(OPENWRT_SRC), git branch \"$(OPENWRT_COMMIT)\", revision $$OPENWRT_REVISION" >> $(VERSION_FILE); \
+	# add feed revisions \
+	for FEED in `cd $(OPENWRT_DIR); ./scripts/feeds list -n`; do \
+	  FEED_DIR=$(addprefix $(OPENWRT_DIR)/feeds/,$$FEED); \
+	  FEED_GIT_REPO=`cd $$FEED_DIR; $(GIT_REPO)`; \
+	  FEED_GIT_BRANCH_ESC=`cd $$FEED_DIR; $(GIT_BRANCH) | tr '/' '_'`; \
+	  FEED_REVISION=`cd $$FEED_DIR; $(REVISION)`; \
+	  echo "Feed $$FEED: repository from $$FEED_GIT_REPO, git branch \"$$FEED_GIT_BRANCH_ESC\", revision $$FEED_REVISION" >> $(VERSION_FILE); \
+	done
+
+images: .stamp-images
+
+# build our firmware-images with the Imagebuilder and store them in FW_TARGET_DIR
+#
+# check if "IB_FILE" is defined on commandline for building just some
+# firmware-images with the precomiled Imagebuilder
+# if it is --> use this value for proceeding
+#              and have no prerequirements for ".stamp-images"
+# if it's not: --> use the IB_FILE from the regular lovcation is
+#                  gets created during build, in this case a
+#                  prerequirement is a build OpenWRT
+
+ifeq ($(origin IB_FILE),command line)
+.stamp-images: .FORCE
+	$(info IB_FILE explicitly defined; using it for building firmware-images)
+else
+.stamp-images: .stamp-compiled
+	$(info IB_FILE not defined; assuming called from inside regular build)
+	$(eval IB_FILE := $(shell ls -tr $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz | tail -n1))
+endif
+	mkdir -p $(FW_TARGET_DIR)
+	$(UMASK); ./assemble_firmware.sh -p "$(PROFILES)" -i $(IB_FILE) -e $(FW_DIR)/embedded-files -t $(FW_TARGET_DIR) -u "$(PACKAGES_LIST_DEFAULT)"
+	# get relative path of firmwaredir
+	$(eval RELPATH := $(shell perl -e 'use File::Spec; print File::Spec->abs2rel(@ARGV) . "\n"' "$(FW_TARGET_DIR)" "$(FW_DIR)" ))
+	# shorten firmware of images to prevent some (TP-Link) firmware-upgrader from complaining
+	# see https://github.com/freifunk-berlin/firmware/issues/178
+	# 1) remove all "squashfs" from filenames
+	# for file in `find $(RELPATH) -name "freifunk-berlin-*-squashfs-*.bin"` ; do mv $$file $${file/squashfs-/}; done
+	# 2) remove all TARGET names (e.g. ar71xx-generic) from filename
+	# for file in `find $(RELPATH) -name "freifunk-berlin-*-$(MAINTARGET)-$(SUBTARGET)-*.bin"` ; do mv $$file $${file/$(MAINTARGET)-$(SUBTARGET)-/}; done
+	touch $@
+
+
+
+# fill firmwares-directory with:
+#  * firmwares built with imagebuilder
+#  * imagebuilder file
+#  * packages directory
+#firmwares: stamp-clean-firmwares .stamp-firmwares
+#.stamp-firmwares: .stamp-compiled
+#	rm -rf $(IB_BUILD_DIR)
+#	mkdir -p $(IB_BUILD_DIR)
+#	$(eval TOOLCHAIN_PATH := $(shell printf "%s:" $(OPENWRT_DIR)/staging_dir/toolchain-*/bin))
+#	$(eval IB_FILE := $(shell ls $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz))
+#	mkdir -p $(FW_TARGET_DIR)
+#	$(UMASK); $(FW_DIR)/assemble_firmware.sh -d -p "$(PROFILES)" -i $(IB_FILE) -t $(FW_TARGET_DIR) -u "$(PKG_LIST)"
+#	# copy imagebuilder, sdk and toolchain (if existing)
+#	cp $$(find $(OPENWRT_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
+#	# copy packages
+#	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
+#	cd $(OPENWRT_DIR)/bin; \
+#		rsync -avR $$(find targets -name packages -type d) $$PACKAGES_DIR; \
+#		rsync -avr packages $$PACKAGES_DIR
+#	touch $@
+
+stamp-clean-firmwares:
+	rm -f $(OPENWRT_DIR)/.config
+	rm -f .stamp-$*
 
 stamp-clean-%:
 	rm -f .stamp-$*
 
 stamp-clean:
 	rm -f .stamp-*
-
-# unpatch needs "patches/" in openwrt
-unpatch: $(OPENWRT_DIR)/patches
-# RC = 2 of quilt --> nothing to be done
-	cd $(OPENWRT_DIR); quilt pop -a -f || [ $$? = 2 ] && true
-	rm -rf $(OPENWRT_DIR)/tmp
-	rm -f .stamp-patched
+	rm -rf $(GLUON_TMPDIR)
 
 clean: stamp-clean .stamp-openwrt-cleaned
 
-.PHONY: openwrt-clean openwrt-clean-bin openwrt-update openwrt-symlink-dl patch feeds-update prepare compile firmwares stamp-clean clean
+.PHONY: openwrt-clean openwrt-clean-bin patch feeds-update prepare compile firmwares stamp-clean clean
 .NOTPARALLEL:
 .FORCE:

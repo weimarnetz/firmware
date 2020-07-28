@@ -1,5 +1,9 @@
---- a/feeds/freifunk/modules/luci-mod-freifunk/Makefile
-+++ b/feeds/freifunk/modules/luci-mod-freifunk/Makefile
+From: andibraeu <freifunk@andi95.de>
+Subject: remove freifunk firewall from package
+Date: Fri, 6 Sep 2019 08:29:50 +0000
+
+--- freifunk/modules/luci-mod-freifunk/Makefile
++++ freifunk/modules/luci-mod-freifunk/Makefile
 @@ -7,7 +7,7 @@
  include $(TOPDIR)/rules.mk
  
@@ -7,6 +11,6 @@
 -LUCI_DEPENDS:=+luci-mod-admin-full +luci-lib-json +luci-lib-ipkg +freifunk-firewall +freifunk-common
 +LUCI_DEPENDS:=+luci-mod-admin-full +luci-lib-json +luci-lib-ipkg +freifunk-common
  
- include ../../luci.mk
+ include ../../freifunk.mk
  
 

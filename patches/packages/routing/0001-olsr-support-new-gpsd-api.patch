@@ -10,11 +10,11 @@ This code is only compile-tested but not runtime-tested.
  1 file changed, 99 insertions(+)
  create mode 100644 package/feeds/routing/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch
 
-diff --git a/package/feeds/routing/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch b/package/feeds/routing/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch
+diff --git a/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch b/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch
 new file mode 100644
 index 0000000..ebf253d
 --- /dev/null
-+++ b/package/feeds/routing/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch
++++ b/olsrd/patches/001-pud_adapt_to_API_changes_in_gpsd_3.20.patch
 @@ -0,0 +1,99 @@
 +commit b2dfb6c27fcf4ddae87b0e99492f4bb8472fa39a
 +Author: Eneas U de Queiroz <cotequeiroz@gmail.com>

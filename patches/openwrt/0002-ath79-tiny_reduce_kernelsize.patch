@@ -1,7 +1,10 @@
-Index: openwrt/target/linux/ath79/tiny/config-default
+From: mt <mt>
+Subject: reduce kernelsize for ath79
+
+Index: target/linux/ath79/tiny/config-default
 ===================================================================
---- openwrt.orig/target/linux/ath79/tiny/config-default
-+++ openwrt/target/linux/ath79/tiny/config-default
+--- a/target/linux/ath79/tiny/config-default
++++ b/target/linux/ath79/tiny/config-default
 @@ -16,3 +16,7 @@ CONFIG_PHY_AR7100_USB=y
  CONFIG_PHY_AR7200_USB=y
  CONFIG_REGULATOR=y
