@@ -70,38 +70,42 @@ $0 -i <IB_FILE> -p <profile>
 -l <dir> (optional) directory to the package lists
 -n <dir> (optional) path to a temp directory
 -u <list> usecase. seperate multiple usecases by a space
+-e <dir> (optional) directory of files to directtly include into image
 "
 }
 
-while getopts "di:l:n:p:t:u:" option; do
-        case "$option" in
+while getopts "di:l:n:p:t:u:e:" option; do
+	case "$option" in
 		d)
 			DEBUG=y
 			;;
-                i)
-                        IB_FILE="$OPTARG"
-                        ;;
-                p)
-                        PROFILES="$OPTARG"
-                        ;;
-                t)
-                        DEST_DIR="$OPTARG"
-                        ;;
-                l)
-                        PKGLIST_DIR="$OPTARG"
-                        ;;
-                n)
-                        TEMP_DIR="$OPTARG"
-                        ;;
+		i)
+			IB_FILE="$OPTARG"
+			;;
+		e)
+			MBED_DIR="$OPTARG"
+			;;
+		p)
+			PROFILES="$OPTARG"
+			;;
+		t)
+			DEST_DIR="$OPTARG"
+			;;
+		l)
+			PKGLIST_DIR="$OPTARG"
+			;;
+		n)
+			TEMP_DIR="$OPTARG"
+			;;
 		u)
-                        USECASES="$OPTARG"
-                        ;;
-                *)
-                        echo "Invalid argument '-$OPTARG'."
-                        usage
-                        exit 1
-                        ;;
-        esac
+			USECASES="$OPTARG"
+			;;
+		*)
+			echo "Invalid argument '-$OPTARG'."
+			usage
+			exit 1
+			;;
+	esac
 done
 shift $((OPTIND - 1))
 
@@ -132,7 +136,7 @@ DEST_DIR=$(to_absolute_path "$DEST_DIR")
 info $DEST_DIR
 
 info "Extract image builder $IB_FILE"
-tar xf "$IB_FILE" -C "$TEMP_DIR"
+tar xf "$IB_FILE" --strip-components=1 -C "$TEMP_DIR"
 
 for profile in $PROFILES ; do
 	info "Building a profile for $profile"
@@ -154,8 +158,21 @@ for profile in $PROFILES ; do
 			package_list="${usecase}"
 		fi
 
-		info "Building usecase $usecase"
+		if [ -e "${PKGLIST_DIR}/${package_list}.txt" ]; then
+			info "Building usecase $usecase"
+		else
+			error "usecase $usecase not defined"
+			exit 1
+		fi
+
 		info "Using package list $package_list"
+
+		packages=$(parse_pkg_list_file "${PKGLIST_DIR}/${package_list}.txt")
+
+		if [ -z "${packages}" ] ; then
+			info "skipping this usecase, as package list is empty"
+			continue
+		fi
 
 		hookfile=$(to_absolute_path "${PKGLIST_DIR}/${package_list}.sh")
 		if [ -f "$hookfile" ]; then
@@ -163,11 +180,17 @@ for profile in $PROFILES ; do
 			img_params="$img_params CUSTOM_POSTINST_SCRIPT=$hookfile"
 		fi
 
-		packages=$(parse_pkg_list_file "${PKGLIST_DIR}/${package_list}.txt")
+		if [ -n "$MBED_DIR" ]; then
+			mbed_dir=$(to_absolute_path "${MBED_DIR}")
+			info "embedding files from $mbed_dir."
+			if [ $(ls $mbed_dir | wc -l) -gt 0 ]; then
+				img_params="$img_params FILES=$mbed_dir"
+			fi
+		fi
 
 		# ensure BIN_DIR is valid
 		mkdir -p "${DEST_DIR}/${package_list}"
 
-		make -C "${TEMP_DIR}/$(ls ${TEMP_DIR}/)" image "PROFILE=$profile" "PACKAGES=$packages" "BIN_DIR=${DEST_DIR}/${package_list}" $img_params V=s 
+		make -C "${TEMP_DIR}/" image "PROFILE=$profile" "PACKAGES=$packages" "BIN_DIR=${DEST_DIR}/${package_list}" $img_params
 	done
 done
