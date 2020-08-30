@@ -18,6 +18,7 @@ uhttpd
 uhttpd-mod-ubus
 luci-mod-admin-full
 luci-mod-freifunk
+freifunk-common-olsr
 luci-app-olsr
 luci-app-olsr-services
 luci-app-owm
