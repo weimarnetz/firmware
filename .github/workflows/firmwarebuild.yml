@@ -16,7 +16,7 @@ jobs:
   build:
     strategy:
       matrix:
-        target: [ar71xx, ar71xx_tiny, ath79, ath79_tiny, mpc85xx, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86, x86_64, ipq40xx]
+        target: [ath79, ath79_tiny, mpc85xx, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86, x86_64, ipq40xx]
       fail-fast: false
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -39,7 +39,7 @@ jobs:
         sudo -E apt-get -qq clean
 
     # Build firmware for ar71xx target
-    - name: Build ar71xx target
+    - name: Build ${{ matrix.target }} target
       run: |
         make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j$(nproc)
     - name: upload
