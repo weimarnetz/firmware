@@ -8,7 +8,8 @@ dl
 build
 key_build
 key_build.pub
-^openwrt
+/openwrt
 dl
 /packages
+/tmp
 img*
