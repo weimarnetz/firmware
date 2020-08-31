@@ -3,6 +3,7 @@
 -ppp-mod-pppoe
 -wpad-mini
 wpad-mesh-wolfssl 
+-wpad-basic-wolfssl
 -firewall
 -wpad-basic
 
