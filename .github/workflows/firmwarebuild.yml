@@ -41,7 +41,7 @@ jobs:
     # Build firmware for ar71xx target
     - name: Build ${{ matrix.target }} target
       run: |
-        make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j$(nproc) V=s
+        make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j1 V=s
     - name: upload
       if: github.event_name == 'push'
       env:
