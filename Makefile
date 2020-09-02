@@ -2,11 +2,8 @@ include config.mk
 
 # get main- and subtarget name from TARGET
 MAINTARGET=$(word 1, $(subst _, ,$(TARGET)))
-SUBTARGET=$(word 2, $(subst _, ,$(TARGET)))
-
-ifeq ($(strip $(SUBTARGET)),)
-	SUBTARGET:=generic
-endif
+CUSTOMTARGET=$(word 2, $(subst _, ,$(TARGET)))
+SUBTARGET=$(word 1, $(subst -, ,$(CUSTOMTARGET)))
 
 GIT_REPO=git config --get remote.origin.url
 GIT_BRANCH=git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,'
@@ -19,7 +16,7 @@ OPENWRT_DIR=$(FW_DIR)/openwrt
 VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(MAINTARGET)/$(SUBTARGET)
+FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(MAINTARGET)/$(CUSTOMTARGET)
 UMASK=umask 022
 
 # test for existing $TARGET-config or abort
@@ -143,8 +140,8 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
 	cd $(OPENWRT_DIR)/bin; \
 	rm -rf $$PACKAGES_DIR; \
-	mkdir -p $$PACKAGES_DIR/targets/$(MAINTARGET)/$(SUBTARGET)/packages; \
-	cp -a $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/packages/* $$PACKAGES_DIR/targets/$(MAINTARGET)/$(SUBTARGET)/packages; \
+	mkdir -p $$PACKAGES_DIR/targets/$(MAINTARGET)/$(CUSTOMTARGET)/packages; \
+	cp -a $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/packages/* $$PACKAGES_DIR/targets/$(MAINTARGET)/$(CUSTOMTARGET)/packages; \
 	# e.g. packages/packages/mips_34k the doublicated packages is correct! \
 	cp -a $(OPENWRT_DIR)/bin/packages $$PACKAGES_DIR/
 	touch $@
@@ -161,7 +158,7 @@ initrd: .stamp-initrd
 	for file in $(TARGET_BINDIR)/*-vmlinux-initramfs.elf; do \
 	  if [ -e $$file ]; then mv $$file $(INITRD_DIR)/ ; fi \
 	done
-	for profile in `cat profiles/$(MAINTARGET)_$(SUBTARGET).profiles`; do \
+	for profile in `cat profiles/$(MAINTARGET)_$(CUSTOMTARGET).profiles`; do \
 	  if [ -e $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin ]; then mv $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin $(INITRD_DIR)/ ; fi \
 	done
 	touch $@
