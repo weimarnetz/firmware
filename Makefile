@@ -161,7 +161,7 @@ initrd: .stamp-initrd
 	for file in $(TARGET_BINDIR)/*-vmlinux-initramfs.elf; do \
 	  if [ -e $$file ]; then mv $$file $(INITRD_DIR)/ ; fi \
 	done
-	for profile in `cat profiles/$(MAINTARGET)-$(SUBTARGET).profiles`; do \
+	for profile in `cat profiles/$(MAINTARGET)_$(SUBTARGET).profiles`; do \
 	  if [ -e $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin ]; then mv $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin $(INITRD_DIR)/ ; fi \
 	done
 	touch $@
