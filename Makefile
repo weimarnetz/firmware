@@ -126,7 +126,7 @@ compile: stamp-clean-compiled .stamp-compiled
 #  * packages directory
 #  * firmware-images are already in place (target images)
 firmwares: stamp-clean-firmwares .stamp-firmwares
-.stamp-firmwares: $(VERSION_FILE)
+.stamp-firmwares: .stamp-compiled $(VERSION_FILE)
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
 	rm -f $(FW_TARGET_DIR)/*.tar.xz
