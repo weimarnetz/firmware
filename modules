@@ -18,11 +18,7 @@ PACKAGES_ROUTING_REPO=https://github.com/openwrt-routing/packages.git
 PACKAGES_ROUTING_COMMIT=b309086fa28ff3571258a7e46c57dab31f249b6d
 PACKAGES_ROUTING_BRANCH=master
 
-PACKAGES_PACKAGES_WEIMAR_REPO=https://github.com/weimarnetz/packages.git
-PACKAGES_PACKAGES_WEIMAR_COMMIT=e116dbe3718891a07f3a5c2bc626824b4f651fa5
-PACKAGES_PACKAGES_WEIMAR_BRANCH=brauhaus-19.07
-
 PACKAGES_PACKAGES_GLUON_REPO=https://github.com/freifunk-gluon/packages.git
 PACKAGES_PACKAGES_GLUON_COMMIT=95c805c863cd0818f0e5196d3b7bde6860fd2861
 
-GLUON_FEEDS='packages luci freifunk routing packages_weimar packages_gluon'
+GLUON_FEEDS='packages luci freifunk routing packages_gluon'

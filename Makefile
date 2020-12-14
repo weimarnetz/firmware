@@ -27,9 +27,6 @@ endif
 # if any of the following files have been changed: clean up openwrt dir
 DEPS=$(TARGET_CONFIG) modules patches $(wildcard patches/*)
 
-# profiles to be built (router models)
-PROFILES?=$(shell cat $(FW_DIR)/profiles/$(TARGET).profiles)
-
 
 default: firmwares
 
@@ -129,7 +126,7 @@ compile: stamp-clean-compiled .stamp-compiled
 #  * packages directory
 #  * firmware-images are already in place (target images)
 firmwares: stamp-clean-firmwares .stamp-firmwares
-.stamp-firmwares: .stamp-images $(VERSION_FILE) .stamp-initrd
+.stamp-firmwares: $(VERSION_FILE)
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
 	rm -f $(FW_TARGET_DIR)/*.tar.xz
@@ -144,23 +141,6 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	cp -a $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/packages/* $$PACKAGES_DIR/targets/$(MAINTARGET)/$(CUSTOMTARGET)/packages; \
 	# e.g. packages/packages/mips_34k the doublicated packages is correct! \
 	cp -a $(OPENWRT_DIR)/bin/packages $$PACKAGES_DIR/
-	touch $@
-
-initrd: .stamp-initrd
-.stamp-initrd: .stamp-compiled
-	$(eval TARGET_BINDIR := $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET))
-	$(eval INITRD_DIR := $(FW_TARGET_DIR)/initrd)
-	[ -d $(INITRD_DIR) ] || mkdir -p $(INITRD_DIR)
-	# remove old versions
-	
-	rm -f $(INITRD_DIR)/*
-	# copy initrd images (if existing)
-	for file in $(TARGET_BINDIR)/*-vmlinux-initramfs.elf; do \
-	  if [ -e $$file ]; then mv $$file $(INITRD_DIR)/ ; fi \
-	done
-	for profile in `cat profiles/$(MAINTARGET)_$(CUSTOMTARGET).profiles`; do \
-	  if [ -e $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin ]; then mv $(TARGET_BINDIR)/*-$$profile-initramfs-kernel.bin $(INITRD_DIR)/ ; fi \
-	done
 	touch $@
 
 $(VERSION_FILE): .stamp-prepared
@@ -181,61 +161,6 @@ $(VERSION_FILE): .stamp-prepared
 	  FEED_REVISION=`cd $$FEED_DIR; $(REVISION)`; \
 	  echo "Feed $$FEED: repository from $$FEED_GIT_REPO, git branch \"$$FEED_GIT_BRANCH_ESC\", revision $$FEED_REVISION" >> $(VERSION_FILE); \
 	done
-
-images: .stamp-images
-
-# build our firmware-images with the Imagebuilder and store them in FW_TARGET_DIR
-#
-# check if "IB_FILE" is defined on commandline for building just some
-# firmware-images with the precomiled Imagebuilder
-# if it is --> use this value for proceeding
-#              and have no prerequirements for ".stamp-images"
-# if it's not: --> use the IB_FILE from the regular lovcation is
-#                  gets created during build, in this case a
-#                  prerequirement is a build OpenWRT
-
-ifeq ($(origin IB_FILE),command line)
-.stamp-images: .FORCE
-	$(info IB_FILE explicitly defined; using it for building firmware-images)
-else
-.stamp-images: .stamp-compiled
-	$(info IB_FILE not defined; assuming called from inside regular build)
-	$(eval IB_FILE := $(shell ls -tr $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz | tail -n1))
-endif
-	mkdir -p $(FW_TARGET_DIR)
-	$(UMASK); ./assemble_firmware.sh -p "$(PROFILES)" -i $(IB_FILE) -e $(FW_DIR)/embedded-files -t $(FW_TARGET_DIR) -u "$(PACKAGES_LIST_DEFAULT)"
-	# get relative path of firmwaredir
-	$(eval RELPATH := $(shell perl -e 'use File::Spec; print File::Spec->abs2rel(@ARGV) . "\n"' "$(FW_TARGET_DIR)" "$(FW_DIR)" ))
-	# shorten firmware of images to prevent some (TP-Link) firmware-upgrader from complaining
-	# see https://github.com/freifunk-berlin/firmware/issues/178
-	# 1) remove all "squashfs" from filenames
-	# for file in `find $(RELPATH) -name "freifunk-berlin-*-squashfs-*.bin"` ; do mv $$file $${file/squashfs-/}; done
-	# 2) remove all TARGET names (e.g. ar71xx-generic) from filename
-	# for file in `find $(RELPATH) -name "freifunk-berlin-*-$(MAINTARGET)-$(SUBTARGET)-*.bin"` ; do mv $$file $${file/$(MAINTARGET)-$(SUBTARGET)-/}; done
-	touch $@
-
-
-
-# fill firmwares-directory with:
-#  * firmwares built with imagebuilder
-#  * imagebuilder file
-#  * packages directory
-#firmwares: stamp-clean-firmwares .stamp-firmwares
-#.stamp-firmwares: .stamp-compiled
-#	rm -rf $(IB_BUILD_DIR)
-#	mkdir -p $(IB_BUILD_DIR)
-#	$(eval TOOLCHAIN_PATH := $(shell printf "%s:" $(OPENWRT_DIR)/staging_dir/toolchain-*/bin))
-#	$(eval IB_FILE := $(shell ls $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*-imagebuilder-*.tar.xz))
-#	mkdir -p $(FW_TARGET_DIR)
-#	$(UMASK); $(FW_DIR)/assemble_firmware.sh -d -p "$(PROFILES)" -i $(IB_FILE) -t $(FW_TARGET_DIR) -u "$(PKG_LIST)"
-#	# copy imagebuilder, sdk and toolchain (if existing)
-#	cp $$(find $(OPENWRT_DIR)/bin/targets/$(MAINTARGET) -type f -name "*imagebuilder-*.tar.xz") $(FW_TARGET_DIR)/
-#	# copy packages
-#	PACKAGES_DIR="$(FW_TARGET_DIR)/packages"; \
-#	cd $(OPENWRT_DIR)/bin; \
-#		rsync -avR $$(find targets -name packages -type d) $$PACKAGES_DIR; \
-#		rsync -avr packages $$PACKAGES_DIR
-#	touch $@
 
 stamp-clean-firmwares:
 	rm -f $(OPENWRT_DIR)/.config
