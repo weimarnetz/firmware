@@ -6,9 +6,9 @@ name: Weimarnetz Firmware Build
 # events but only for the master branch
 on:
   push:
-    branches: [ brauhaus-19.07, openwrt-trunk ]
+    branches: [ brauhaus-19.07, trunk ]
   pull_request:
-    branches: [ brauhaus-19.07, openwrt-trunk ]
+    branches: [ brauhaus-19.07, trunk ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -49,4 +49,4 @@ jobs:
       run: |
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${SSH_KEY}"
-        rsync -avz '-e ssh -o StrictHostKeyChecking=no -p22223' firmwares/ buildbot@buildbot.weimarnetz.de:/brauhaus
+        rsync -avz '-e ssh -o StrictHostKeyChecking=no -p22223' openwrt-base/ buildbot@buildbot.weimarnetz.de:/brauhaus

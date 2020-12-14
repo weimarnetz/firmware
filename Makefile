@@ -16,7 +16,7 @@ OPENWRT_DIR=$(FW_DIR)/openwrt
 VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/firmwares/$(FW_REVISION)/$(MAINTARGET)/$(CUSTOMTARGET)
+FW_TARGET_DIR=$(FW_DIR)/openwrt-base/$(GIT_BRANCH)/$(MAINTARGET)/$(CUSTOMTARGET)
 UMASK=umask 022
 
 # test for existing $TARGET-config or abort
@@ -130,6 +130,8 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
 	rm -f $(FW_TARGET_DIR)/*.tar.xz
+	# remove gcc version from filename
+	for file in `find ./ -name "*sdk*.tar.xz"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
 	for file in $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*{imagebuilder,sdk,toolchain}*.tar.xz; do \
 		if [ -e $$file ]; then mv $$file $(FW_TARGET_DIR)/ ; fi \
 	done
