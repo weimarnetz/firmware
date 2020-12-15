@@ -4,6 +4,7 @@
 patches/*~
 bin
 firmwares
+openwrt-base
 dl
 build
 key_build

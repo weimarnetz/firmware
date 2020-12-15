@@ -16,7 +16,7 @@ OPENWRT_DIR=$(FW_DIR)/openwrt
 VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
 IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
-FW_TARGET_DIR=$(FW_DIR)/openwrt-base/$(GIT_BRANCH)/$(MAINTARGET)/$(CUSTOMTARGET)
+FW_TARGET_DIR=$(FW_DIR)/openwrt-base/$(shell $(GIT_BRANCH))/$(MAINTARGET)/$(CUSTOMTARGET)
 UMASK=umask 022
 
 # test for existing $TARGET-config or abort
