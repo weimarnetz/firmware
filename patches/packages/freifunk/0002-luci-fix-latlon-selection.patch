@@ -1,18 +1,27 @@
-From: andibraeu <freifunk@andi95.de>
-Subject: fix latlon selection from map on settings page
-Date: Wed, 20 Sep 2021 13:37:23 +0000
+From 29f8bdec64b35f4931df9a0a19b16a921de6347e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andreas=20Br=C3=A4u?= <ab@andi95.de>
+Date: Wed, 20 Jan 2021 16:46:50 +0100
+Subject: [PATCH] set lat and lon to correct field when clicking on osm map
 
---- freifunk/modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm
-+++ freifunk/modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm
+---
+ modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm b/modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm
+index 78b4dff91..45555c5eb 100644
+--- a/modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm
++++ b/modules/luci-mod-freifunk/luasrc/view/cbi/osmll_value.htm
 @@ -10,8 +10,8 @@ $Id$
  
-                <% if self:cfgvalue(section) ~= false then %>
-                        <% if self.latfield and self.lonfield then %>
--                               <input type="hidden" <%= attr("value", string.format('cbid.%s.%s.%s', self.config, section, self.latfield))..attr("id", cbid..".latfield")..attr("name", cbid..".latfield")%>/>
--                               <input type="hidden" <%= attr("value", string.format('cbid.%s.%s.%s', self.config, section, self.lonfield))..attr("id", cbid..".lonfield")..attr("name", cbid..".lonfield")%>/>
-+                               <input type="hidden" <%= attr("value", string.format('widget.cbid.%s.%s.%s', self.config, section, self.latfield))..attr("id", cbid..".latfield")..attr("name", cbid..".latfield")%>/>
-+                               <input type="hidden" <%= attr("value", string.format('widget.cbid.%s.%s.%s', self.config, section, self.lonfield))..attr("id", cbid..".lonfield")..attr("name", cbid..".lonfield")%>/>
-                        <% end %>
-                        <input type="hidden" <%= attr("value", self.centerlat)..attr("id", cbid..".centerlat")..attr("name", cbid..".centerlat")%>/>
-                        <input type="hidden" <%= attr("value", self.centerlon)..attr("id", cbid..".centerlon")..attr("name", cbid..".centerlon")%>/>
-(E
+ 		<% if self:cfgvalue(section) ~= false then %>
+ 			<% if self.latfield and self.lonfield then %>
+-				<input type="hidden" <%= attr("value", string.format('cbid.%s.%s.%s', self.config, section, self.latfield))..attr("id", cbid..".latfield")..attr("name", cbid..".latfield")%>/>
+-				<input type="hidden" <%= attr("value", string.format('cbid.%s.%s.%s', self.config, section, self.lonfield))..attr("id", cbid..".lonfield")..attr("name", cbid..".lonfield")%>/>
++				<input type="hidden" <%= attr("value", string.format('widget.cbid.%s.%s.%s', self.config, section, self.latfield))..attr("id", cbid..".latfield")..attr("name", cbid..".latfield")%>/>
++				<input type="hidden" <%= attr("value", string.format('widget.cbid.%s.%s.%s', self.config, section, self.lonfield))..attr("id", cbid..".lonfield")..attr("name", cbid..".lonfield")%>/>
+ 			<% end %>
+ 			<input type="hidden" <%= attr("value", self.centerlat)..attr("id", cbid..".centerlat")..attr("name", cbid..".centerlat")%>/>
+ 			<input type="hidden" <%= attr("value", self.centerlon)..attr("id", cbid..".centerlon")..attr("name", cbid..".centerlon")%>/>
+-- 
+2.30.0
+
