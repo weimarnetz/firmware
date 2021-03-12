@@ -1,0 +1,29 @@
+From 1490b07d4e59714b62084e1962bfb3002c887057 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Andreas=20Br=C3=A4u?= <ab@andi95.de>
+Date: Fri, 12 Mar 2021 23:56:22 +0100
+Subject: [PATCH] workaround for
+ https://github.com/weimarnetz/packages/issues/6
+
+---
+ .../luasrc/controller/freifunk/freifunk.lua                  | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/modules/luci-mod-freifunk/luasrc/controller/freifunk/freifunk.lua b/modules/luci-mod-freifunk/luasrc/controller/freifunk/freifunk.lua
+index e04cfaf7d..71376dfe9 100644
+--- a/modules/luci-mod-freifunk/luasrc/controller/freifunk/freifunk.lua
++++ b/modules/luci-mod-freifunk/luasrc/controller/freifunk/freifunk.lua
+@@ -71,6 +71,11 @@ function index()
+ 	page.title  = _("Basic Settings")
+ 	page.order  = 5
+ 
++	page        = node("admin", "freifunk", "basics", "index")
++	page.target = cbi("freifunk/basics")
++	page.title  = _("Basic Settings")
++	page.order  = 5
++
+ 	page        = node("admin", "freifunk", "basics", "profile")
+ 	page.target = cbi("freifunk/profile")
+ 	page.title  = _("Profile")
+-- 
+2.30.1
+
