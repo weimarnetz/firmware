@@ -106,7 +106,7 @@ $(OPENWRT_DIR)/.config: .stamp-feeds-updated $(TARGET_CONFIG) .stamp-build_rev $
 	echo ${FW_REVISION}
 	cat $(TARGET_CONFIG) >$(OPENWRT_DIR)/.config && \
 	sed -i "/^CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$(FW_REVISION)\"" $(OPENWRT_DIR)/.config
-	sed -i "/^CONFIG_VERSION_REPO=/c\CONFIG_VERSION_REPO=\"http://buildbot.weimarnetz.de/builds/openwrt-base/$(GIT_BRANCH)/%S/packages\"" $(OPENWRT_DIR)/.config
+	sed -i "/^CONFIG_VERSION_REPO=/c\CONFIG_VERSION_REPO=\"http://buildbot.weimarnetz.de/builds/openwrt-base/$(FW_BRANCH)/%S/packages\"" $(OPENWRT_DIR)/.config
 	$(UMASK); \
 	  $(MAKE) -C $(OPENWRT_DIR) defconfig clean
 
