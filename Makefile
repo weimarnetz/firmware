@@ -90,12 +90,12 @@ patch: stamp-clean-patched .stamp-patched
 
 # share download dir
 $(FW_DIR)/dl:
-	mkdir $(FW_DIR)/dl
+	mkdir -p $(FW_DIR)/dl
 $(OPENWRT_DIR)/dl: $(FW_DIR)/dl
 	ln -s $(FW_DIR)/dl $(OPENWRT_DIR)/dl
 # share ccache dir
 $(FW_DIR)/ccache:
-	mkdir $(FW_DIR)/ccache
+	mkdir -p $(FW_DIR)/ccache
 $(OPENWRT_DIR)/.ccache: $(FW_DIR)/ccache
 	ln -s $(FW_DIR)/ccache $(OPENWRT_DIR)/.ccache	
 	
