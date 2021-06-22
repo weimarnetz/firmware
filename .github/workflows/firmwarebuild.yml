@@ -25,6 +25,13 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+    - name: ccache 
+      uses: actions/cache@v2
+      env:
+        cache-name: ccache
+      with:
+        path: ~/.ccache
+        key: ${{ runner.os }}-build-${{ env.cache-name }}  
     - run: |
         git fetch --prune --unshallow
     
@@ -41,6 +48,7 @@ jobs:
     # Build firmware for ar71xx target
     - name: Build ${{ matrix.target }} target
       run: |
+        ln -s ~/.ccache ccache
         make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j$(nproc)
     - name: upload
       if: github.event_name == 'push'

@@ -15,7 +15,6 @@ FW_BRANCH=$(shell $(GIT_BRANCH))
 OPENWRT_DIR=$(FW_DIR)/openwrt
 VERSION_FILE=$(FW_TARGET_DIR)/VERSION.txt
 TARGET_CONFIG=$(FW_DIR)/configs/common.config $(FW_DIR)/configs/$(TARGET).config
-IB_BUILD_DIR=$(FW_DIR)/imgbldr_tmp
 FW_TARGET_DIR=$(FW_DIR)/openwrt-base/$(shell $(GIT_BRANCH))/$(MAINTARGET)/$(CUSTOMTARGET)
 UMASK=umask 022
 
@@ -94,6 +93,12 @@ $(FW_DIR)/dl:
 	mkdir $(FW_DIR)/dl
 $(OPENWRT_DIR)/dl: $(FW_DIR)/dl
 	ln -s $(FW_DIR)/dl $(OPENWRT_DIR)/dl
+# share ccache dir
+$(FW_DIR)/ccache:
+	mkdir $(FW_DIR)/ccache
+$(OPENWRT_DIR)/.ccache: $(FW_DIR)/ccache
+	ln -s $(FW_DIR)/ccache $(OPENWRT_DIR)/.ccache	
+	
 
 # create embedded-files/ and make it avail to openwrt
 $(FW_DIR)/embedded-files:
@@ -102,7 +107,7 @@ $(OPENWRT_DIR)/files: $(FW_DIR)/embedded-files
 	ln -s $(FW_DIR)/embedded-files $(OPENWRT_DIR)/files
 
 # openwrt config
-$(OPENWRT_DIR)/.config: .stamp-feeds-updated $(TARGET_CONFIG) .stamp-build_rev $(OPENWRT_DIR)/dl
+$(OPENWRT_DIR)/.config: .stamp-feeds-updated $(TARGET_CONFIG) .stamp-build_rev $(OPENWRT_DIR)/dl $(OPENWRT_DIR)/.ccache
 	echo ${FW_REVISION}
 	cat $(TARGET_CONFIG) >$(OPENWRT_DIR)/.config && \
 	sed -i "/^CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$(FW_REVISION)\"" $(OPENWRT_DIR)/.config
