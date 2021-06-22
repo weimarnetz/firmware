@@ -33,7 +33,7 @@ jobs:
         path: | 
           ~/.ccache
           ~/.dl
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-{{ matrix.target }}  
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.target }}  
     - run: |
         git fetch --prune --unshallow
     
