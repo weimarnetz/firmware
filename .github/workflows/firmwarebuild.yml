@@ -28,12 +28,12 @@ jobs:
     - name: ccache 
       uses: actions/cache@v2
       env:
-        cache-name: ccache
+        cache-name: cache
       with:
         path: | 
           ~/.ccache
           ~/.dl
-        key: ${{ runner.os }}-build-${{ env.cache-name }}  
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-{{ matrix.target }}  
     - run: |
         git fetch --prune --unshallow
     
@@ -47,10 +47,12 @@ jobs:
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
 
-    # Build firmware for ar71xx target
+    # Build firmware for target
     - name: Build ${{ matrix.target }} target
       run: |
+        mkdir -p ~/.dl
         ln -s ~/.dl dl
+        mkdir -p ~/.ccache
         ln -s ~/.ccache ccache
         make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j$(nproc)
     - name: upload
