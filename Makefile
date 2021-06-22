@@ -108,7 +108,7 @@ $(OPENWRT_DIR)/.config: .stamp-feeds-updated $(TARGET_CONFIG) .stamp-build_rev $
 	sed -i "/^CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$(FW_REVISION)\"" $(OPENWRT_DIR)/.config
 	sed -i "/^CONFIG_VERSION_REPO=/c\CONFIG_VERSION_REPO=\"http://buildbot.weimarnetz.de/builds/openwrt-base/$(FW_BRANCH)/%S/packages\"" $(OPENWRT_DIR)/.config
 	$(UMASK); \
-	  $(MAKE) -C $(OPENWRT_DIR) defconfig clean
+	  $(MAKE) -C $(OPENWRT_DIR) defconfig
 
 # prepare openwrt working copy
 prepare: stamp-clean-prepared .stamp-prepared
@@ -132,7 +132,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	# remove old versions
 	rm -f $(FW_TARGET_DIR)/*.tar.xz
 	# remove gcc version from filename
-	for file in `find ./ -name "*sdk*.tar.xz"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
+	for file in `find $(FW_TARGET_DIR) -name "*sdk*.tar.xz"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
 	for file in $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*{imagebuilder,sdk,toolchain}*.tar.xz; do \
 		if [ -e $$file ]; then mv $$file $(FW_TARGET_DIR)/ ; fi \
 	done
