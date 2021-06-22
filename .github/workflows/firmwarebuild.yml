@@ -30,8 +30,9 @@ jobs:
       env:
         cache-name: ccache
       with:
-        path: ~/.ccache
-        path: ~/.dl
+        path: | 
+          ~/.ccache
+          ~/.dl
         key: ${{ runner.os }}-build-${{ env.cache-name }}  
     - run: |
         git fetch --prune --unshallow
