@@ -137,7 +137,7 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 	# remove old versions
 	rm -f $(FW_TARGET_DIR)/*.tar.xz
 	# remove gcc version from filename
-	for file in `find $(FW_TARGET_DIR) -name "*sdk*.tar.xz"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
+	for file in `find ./ -name "*sdk*.tar.xz"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
 	for file in $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*{imagebuilder,sdk,toolchain}*.tar.xz; do \
 		if [ -e $$file ]; then mv $$file $(FW_TARGET_DIR)/ ; fi \
 	done
