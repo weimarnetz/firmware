@@ -42,7 +42,7 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install sudo openssh-server rsync git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync 
+        sudo -E apt-get -qq install sudo openssh-server rsync git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync qemu-img 
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
 
