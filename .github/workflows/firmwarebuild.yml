@@ -6,9 +6,9 @@ name: Weimarnetz Firmware Build
 # events but only for the master branch
 on:
   push:
-    branches: [ brauhaus-19.07, trunk ]
+    branches: [ 21.02.3 ]
   pull_request:
-    branches: [ brauhaus-19.07, trunk ]
+    branches: [ 21.02.3 ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -16,7 +16,7 @@ jobs:
   build:
     strategy:
       matrix:
-        target: [ath79_generic, ath79_generic-tight, ath79_tiny, mpc85xx_generic, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86_generic, x86_64, ipq40xx_generic]
+        target: [ath79_generic, ath79_generic-tight, ath79_tiny, mpc85xx_p1010, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86_generic, x86_64, ipq40xx_generic]
       fail-fast: false
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -25,6 +25,13 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+    - name: cache 
+      uses: actions/cache@v2
+      env:
+        cache-name: cache
+      with:
+        path: dl
+        key: ${{ runner.os }}-build-${{ env.cache-name }}
     - run: |
         git fetch --prune --unshallow
     
@@ -34,14 +41,14 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install sudo openssh-server rsync git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync 
+        sudo -E apt-get -qq install sudo openssh-server rsync git subversion build-essential libncurses5-dev zlib1g-dev gawk unzip libxml-perl flex wget gawk libncurses5-dev gettext quilt python libssl-dev rsync qemu-utils 
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
 
-    # Build firmware for ar71xx target
+    # Build firmware for target
     - name: Build ${{ matrix.target }} target
       run: |
-        make TARGET=${{ matrix.target }} PKG_LIST=weimarnetz -j$(nproc)
+        make TARGET=${{ matrix.target }} -j$(nproc)
     - name: upload
       if: github.event_name == 'push'
       env:
