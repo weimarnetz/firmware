@@ -6,9 +6,9 @@ name: Weimarnetz Firmware Build
 # events but only for the master branch
 on:
   push:
-    branches: [ 21.02.3 ]
+    branches: [ trunk ]
   pull_request:
-    branches: [ 21.02.3 ]
+    branches: [ trunk ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
