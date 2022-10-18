@@ -629,7 +629,7 @@ diff --git a/target/linux/ath79/generic/base-files/etc/board.d/02_network b/targ
 index c84db5676f..fa28a4aaf4 100644
 --- a/target/linux/ath79/generic/base-files/etc/board.d/02_network
 +++ b/target/linux/ath79/generic/base-files/etc/board.d/02_network
-@@ -174,6 +174,12 @@ ath79_setup_interfaces()
+@@ -169,6 +169,12 @@ ath79_setup_interfaces()
  	tplink,archer-c60-v2|\
  	tplink,archer-c60-v3|\
  	tplink,tl-wdr3500-v1|\
@@ -640,9 +640,9 @@ index c84db5676f..fa28a4aaf4 100644
 +	tplink,tl-wr841-v11-8m|\
 +	tplink,tl-wr841-v11-16m|\
  	tplink,tl-wr842n-v1|\
- 	tplink,tl-wr842n-v3|\
- 	ubnt,airrouter)
-@@ -451,6 +457,8 @@ ath79_setup_interfaces()
+ 	tplink,tl-wr842n-v3)
+ 		ucidef_set_interface_wan "eth1"
+@@ -444,6 +450,8 @@ ath79_setup_interfaces()
  			"0@eth0" "2:lan:3" "3:lan:2" "4:lan:1" "5:lan:4"
  		;;
  	tplink,tl-wr841hp-v2|\
