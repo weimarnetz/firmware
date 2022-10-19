@@ -3,6 +3,7 @@
   "extends": [
     "config:base"
   ],
+  "baseBranches": ["22.03.2", "22.03.*", "21.02.*"]
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
