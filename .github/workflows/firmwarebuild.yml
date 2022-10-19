@@ -16,6 +16,7 @@ on:
       - 'scripts/**' 
   pull_request:
     branches: [ 22.03.2 ]
+    paths:
       - 'modules'
       - 'Makefile'
       - 'configs/**'
