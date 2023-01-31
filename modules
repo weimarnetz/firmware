@@ -22,3 +22,4 @@ PACKAGES_PACKAGES_GLUON_REPO=https://github.com/freifunk-gluon/packages.git
 PACKAGES_PACKAGES_GLUON_COMMIT=0648b2dbf71c16127ae498cc14f1d33c3f95c741
 
 GLUON_FEEDS='packages luci freifunk routing packages_gluon'
+
