@@ -148,5 +148,4 @@ quilt edit somedir/somefile1  # edit files
 quilt edit somedir/somefile2
 quilt refresh                 # creates/updates the patch file
 ```
-
 ...
