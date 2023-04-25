@@ -26,7 +26,6 @@ endif
 # if any of the following files have been changed: clean up openwrt dir
 DEPS=$(TARGET_CONFIG) modules patches $(wildcard patches/*)
 
-
 default: firmwares
 
 ## Gluon - Begin
