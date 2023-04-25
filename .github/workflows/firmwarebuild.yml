@@ -7,7 +7,7 @@ name: Weimarnetz Firmware Build
 on:
   workflow_dispatch:
   push:
-    branches: [ 21.02.5 ]
+    branches: [ 21.02.6 ]
     paths:
       - 'modules'
       - 'Makefile'
@@ -16,7 +16,7 @@ on:
       - 'patches/**'
       - 'scripts/**' 
   pull_request:
-    branches: [ 21.02.5 ]
+    branches: [ 21.02.6 ]
     paths:
       - 'modules'
       - 'Makefile'
