@@ -7,7 +7,7 @@ name: Weimarnetz Firmware Build
 on:
   workflow_dispatch:
   push:
-    branches: [ 23.05.4 ]
+    branches: [ 23.05.5 ]
     paths:
       - 'modules'
       - 'Makefile'
@@ -16,7 +16,7 @@ on:
       - 'patches/**'
       - 'scripts/**' 
   pull_request:
-    branches: [ 23.05.4 ]
+    branches: [ 23.05.5 ]
     paths:
       - 'modules'
       - 'Makefile'
@@ -41,7 +41,7 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v4
     - name: cache 
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       env:
         cache-name: cache
       with:
