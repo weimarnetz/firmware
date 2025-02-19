@@ -54,8 +54,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        uname -a
-        cat /etc/apt/sources.list.d/ubuntu.sources
+        cat /etc/apt/apt-mirrors.txt
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E add-apt-repository -y universe
         sudo -E apt-get -qq update
