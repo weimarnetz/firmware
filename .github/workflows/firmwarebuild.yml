@@ -57,6 +57,7 @@ jobs:
         cat /etc/apt/apt-mirrors.txt
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E add-apt-repository -y universe
+      echo "http://ubuntu.mirror.tudos.de/ubuntu/ priorty: 1" | sudo tee /etc/apt/apt-mirrors.txt
         sudo -E apt-get update
         apt-cache search clang
         apt-cache search gcc-multilib
