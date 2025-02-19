@@ -34,7 +34,7 @@ jobs:
         target: [ath79_generic, ath79_generic-tight, ath79_tiny, mpc85xx_p1010, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86_generic, x86_64, ipq40xx_generic]
       fail-fast: false
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -54,6 +54,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        cat /etc/apt/sources.list
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E add-apt-repository -y universe
         sudo -E apt-get -qq update
