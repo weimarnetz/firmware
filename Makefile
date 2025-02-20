@@ -124,7 +124,7 @@ prepare: stamp-clean-prepared .stamp-prepared
 compile: stamp-clean-compiled .stamp-compiled
 .stamp-compiled: .stamp-prepared openwrt-clean-bin
 	$(UMASK); \
-	  $(MAKE) -C $(OPENWRT_DIR) $(MAKE_ARGS)
+	  $(MAKE) -C $(OPENWRT_DIR) CFLAGS="-fstack-protector" $(MAKE_ARGS)
 	touch $@
 
 # fill firmwares-directory with:
