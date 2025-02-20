@@ -23,4 +23,3 @@ PACKAGES_PACKAGES_GLUON_COMMIT=04d2b6ffbb6ee02012f2733b7752d8db0d12eaff
 
 GLUON_FEEDS='packages luci freifunk routing packages_gluon'
 
-
