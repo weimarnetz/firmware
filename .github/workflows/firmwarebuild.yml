@@ -54,10 +54,11 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        cat /etc/apt/sources.list.d/ubuntu.sources
         cat /etc/apt/apt-mirrors.txt
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E add-apt-repository -y universe
-        echo "http://ubuntu.mirror.tudos.de/ubuntu/ priority: 1" | sudo tee /etc/apt/apt-mirrors.txt
+        echo "http://ubuntu.mirror.tudos.de/ubuntu/ priority:1" | sudo tee /etc/apt/apt-mirrors.txt
         sudo -E apt-get update -o Debug::Acquire::http=true
         apt-cache search clang
         apt-cache search gcc-multilib
