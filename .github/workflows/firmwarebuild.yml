@@ -77,7 +77,7 @@ jobs:
         deb http://archive.ubuntu.com/ubuntu noble-security main universe restricted multiverse
         EOF
         sudo -E apt-get -qq update
-        sudo -E apt install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget qeum-utils
+        sudo -E apt install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-setuptools rsync swig unzip zlib1g-dev file wget
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
 
