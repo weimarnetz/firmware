@@ -17,7 +17,7 @@ on:
           - ramips_mt7621
           - ramips_mt76x8
           - x86_generic
-          - x86_64
+          - '"x86_64"'
           - ipq40xx_generic
         required: true
   push:
@@ -46,7 +46,7 @@ jobs:
     strategy:
       matrix:
         target: > 
-          ${{ fromJSON(format('["{0}"]', inputs.target || 'ath79_generic","mpc85xx_p1010","ramips_mt7620","ramips_mt7621","ramips_mt76x8","x86_generic","x86_64","ipq40xx_generic')) }}
+          ${{ fromJSON(format('[{0}]', inputs.target || '"ath79_generic","mpc85xx_p1010","ramips_mt7620","ramips_mt7621","ramips_mt76x8","x86_generic","x86_64","ipq40xx_generic"')) }}
       fail-fast: false
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
