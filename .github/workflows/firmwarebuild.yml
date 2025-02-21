@@ -17,7 +17,7 @@ on:
           - ramips_mt7621
           - ramips_mt76x8
           - x86_generic
-          - x86_64
+          - "x86_64"
           - ipq40xx_generic
         required: true
   push:
