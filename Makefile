@@ -135,10 +135,10 @@ firmwares: stamp-clean-firmwares .stamp-firmwares
 .stamp-firmwares: .stamp-compiled $(VERSION_FILE)
 	# copy imagebuilder, sdk and toolchain (if existing)
 	# remove old versions
-	rm -f $(FW_TARGET_DIR)/*.tar.xz
+	rm -f $(FW_TARGET_DIR)/*.tar.zst
 	# remove gcc version from filename
-	for file in `find ./ -name "*sdk*.tar.xz"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
-	for file in $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*{imagebuilder,sdk,toolchain}*.tar.xz; do \
+	for file in `find ./ -name "*sdk*.tar.zst"`; do newname=`echo "$$file" | sed -e 's/\(.*\)_gcc.*_musl\(.*\)/\1\2/'`; mv $$file $$newname; done
+	for file in $(OPENWRT_DIR)/bin/targets/$(MAINTARGET)/$(SUBTARGET)/*{imagebuilder,sdk,toolchain}*.tar.zst; do \
 		if [ -e $$file ]; then mv $$file $(FW_TARGET_DIR)/ ; fi \
 	done
 	# copy packages
