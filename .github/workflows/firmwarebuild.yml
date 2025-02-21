@@ -89,7 +89,7 @@ jobs:
       run: |
         make TARGET=${{ matrix.target }} -j$(nproc)
     - name: Build ${{ matrix.target }} target in debug mode
-      if: steps.default-build == 'failure'
+      if: steps.default-build.outcome == 'failure'
       run: |
         cd openwrt
         make -j1 V=s
