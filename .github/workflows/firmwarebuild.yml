@@ -6,6 +6,20 @@ name: Weimarnetz Firmware Build
 # events but only for the master branch
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        type: choice
+        description: "Select a target"
+        options: 
+          - '"ath79_generic"'
+          - '"mpc85xx_p1010"'
+          - '"ramips_mt7620"'
+          - '"ramips_mt7621"'
+          - '"ramips_mt76x8"'
+          - '"x86_generic"'
+          - '"x86_64"'
+          - '"ipq40xx_generic"'
+        required: true
   push:
     branches: [ 24.10.0 ]
     paths:
@@ -31,7 +45,7 @@ jobs:
   build:
     strategy:
       matrix:
-        target: [ath79_generic, ath79_generic-tight, ath79_tiny, mpc85xx_p1010, ramips_mt7620, ramips_mt7621, ramips_mt76x8, x86_generic, x86_64, ipq40xx_generic]
+        target: ${{ fromJSON(format('[{0}]', inputs.target || '"ath79_generic","mpc85xx_p1010","ramips_mt7620","ramips_mt7621","ramips_mt76x8","x86_generic","x86_64","ipq40xx_generic"')) }}
       fail-fast: false
     # The type of runner that the job will run on
     runs-on: ubuntu-24.04
@@ -69,8 +83,14 @@ jobs:
 
     # Build firmware for target
     - name: Build ${{ matrix.target }} target
+      continue-on-error: true
       run: |
         make TARGET=${{ matrix.target }} -j$(nproc)
+    - name: Build ${{ matrix.target }} target in debug mode
+      if: steps.default-build.outcome == 'failure'
+      run: |
+        cd openwrt
+        make -j1 V=s
     - name: upload
       if: github.event_name == 'push'
       env:
