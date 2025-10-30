@@ -21,7 +21,7 @@ on:
           - '"ipq40xx_generic"'
         required: true
   push:
-    branches: [ 23.05.5 ]
+    branches: [ 23.05.6 ]
     paths:
       - 'modules'
       - 'Makefile'
@@ -30,7 +30,7 @@ on:
       - 'patches/**'
       - 'scripts/**' 
   pull_request:
-    branches: [ 23.05.5 ]
+    branches: [ 23.05.6 ]
     paths:
       - 'modules'
       - 'Makefile'
